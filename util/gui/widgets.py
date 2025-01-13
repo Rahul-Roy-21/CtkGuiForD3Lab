@@ -2,6 +2,7 @@ from customtkinter import *
 from PIL import Image, ImageSequence
 from os import path as os_path
 from data import DATA, _COMMON_PROPS
+import optuna
 
 COLORS = DATA['colors']
 OPTUNA_TOTAL_TRIALS = _COMMON_PROPS['hp_optim']['optuna_total_trials']
@@ -541,6 +542,7 @@ class InProgressWindow:
         self.gif_path = gif_path
         self.my_font= font
         self.created_optuna_progress=False
+        self.non_pruned_trials = 0
     
     def GET_PROGRESS_WINDOW(self):
         ''' ToBeUsed when progress_window needs to dynamically updated during PROCESS '''
@@ -572,9 +574,40 @@ class InProgressWindow:
             self.best_trial_label.pack(pady=10,padx=10)
 
             self.created_optuna_progress=True
+            self.non_pruned_trials=0
 
     # Callback function to update the progress bar and text
-    def _UPDATE_OPTUNA_PROGRESS_BAR (self, study, trial):
+    def _UPDATE_OPTUNA_PROGRESS_BAR (self, study, trial:optuna.Trial):
+        if not self.created_optuna_progress:
+            raise Exception('Cannot update Optuna Progress as it is not created !!')
+        
+        print('[_UPDATE_OPTUNA_PROGRESS_BAR]...', trial.state, self.non_pruned_trials)
+        if trial.state == optuna.trial.TrialState.COMPLETE:
+            self.non_pruned_trials += 1
+            progress = self.non_pruned_trials / OPTUNA_TOTAL_TRIALS
+            self.progress_bar.set(progress)
+            self.trial_status_label.configure(
+                text=f"Trials: {self.non_pruned_trials}/{OPTUNA_TOTAL_TRIALS} [{len(study.trials)}]"
+            )
+
+            if study.best_trial:
+                best_score = study.best_value
+                self.best_trial_label.configure(
+                    text=f"Best Score: {best_score:.4f} (Trial {study.best_trial.number})"
+                )
+
+            # Stop the optimization if the desired number of non-pruned trials is reached
+            if self.non_pruned_trials >= OPTUNA_TOTAL_TRIALS:
+                study.stop()
+        else:
+            self.trial_status_label.configure(
+                text=f"Trials: {self.non_pruned_trials}/{OPTUNA_TOTAL_TRIALS} [{len(study.trials)}]"
+            )
+
+        self.parent.update_idletasks()
+
+    # Callback function to update the progress bar and text
+    def _UPDATE_OPTUNA_PROGRESS_BAR_WITHOUT_PRUNING (self, study, trial):
         print('[_UPDATE_OPTUNA_PROGRESS_BAR]')
         if not self.created_optuna_progress:
             raise Exception('Cannot update Optuna Progress as it is not created !!')

@@ -238,14 +238,14 @@ SVM_HP_OPTIM_DATA_AND_VARS = {
                 options=SVM_HP_OPTIM_DATA['kernel']['options'],
                 selected_opt_var=ctk.StringVar(value=','.join(SVM_HP_OPTIM_DATA['kernel']['options']))
             ),
-            'grid': {'row':0,'col':1,'colspan':1}
+            'grid': {'row':1,'col':0,'colspan':2}
         },
         'gamma': {
             'type': MultiSelectEntryField(
                 options=SVM_HP_OPTIM_DATA['gamma']['options'],
                 selected_opt_var=ctk.StringVar(value=','.join(SVM_HP_OPTIM_DATA['gamma']['options']))
             ),
-            'grid': {'row':1,'col':0,'colspan':1}
+            'grid': {'row':0,'col':1,'colspan':1}
         },
     }
 }
@@ -320,14 +320,14 @@ LR_HP_OPTIM_DATA_AND_VARS = {
                 options=LR_HP_OPTIM_DATA['penalty']['options'],
                 selected_opt_var=ctk.StringVar(value=','.join(LR_HP_OPTIM_DATA['penalty']['options']))
             ),
-            'grid': {'row':1,'col':0,'colspan':1}
+            'grid': {'row':0,'col':1,'colspan':1}
         },
         'solver': {
             'type': MultiSelectEntryField(
                 options=LR_HP_OPTIM_DATA['solver']['options'],
                 selected_opt_var=ctk.StringVar(value=','.join(LR_HP_OPTIM_DATA['solver']['options']))
             ),
-            'grid': {'row':2,'col':0,'colspan':1}
+            'grid': {'row':2,'col':0,'colspan':2}
         },
     }
 }
@@ -341,7 +341,7 @@ LR_hp_optim_panel = HyperParamOptim_AlgoLabelFrame(
     SELECTED_FEATURES=SELECTED_FEATURES,
     trainVar=TRAIN_FILE_PATH,
     testVar=TEST_FILE_PATH,
-    hyperParamsFrame_NumOfCells=1
+    hyperParamsFrame_NumOfCells=2
 )._GET_ALGO_LABELFRAME()
 
 #KNN

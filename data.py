@@ -5,7 +5,7 @@ _COMMON_PROPS = {
         'scoring_opts': [
             'accuracy', 'balanced_accuracy','average_precision','f1','f1_micro', 'f1_macro', 'f1_weighted','precision', 'recall', 'jaccard','roc_auc', 'roc_auc_ovr','roc_auc_ovo', 'roc_auc_ovr_weighted','roc_auc_ovo_weighted'
         ],
-        'optuna_total_trials' : 40,
+        'optuna_total_trials' : 80,
     }
 }
 

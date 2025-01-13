@@ -50,7 +50,7 @@ def RF_HP_OPTIM_SUBMIT (master:CTk, loading_gif_path:str, RF_inputs: dict, RF_re
         try:
             RF_resultsVar.set('...')
             processResult = RF_HP_OPTIM_PROCESS (
-                RF_HP_OPTIM_INPUTS=RF_inputs, IN_PROGRESS = inProgress,
+                HP_OPTIM_INPUTS=RF_inputs, IN_PROGRESS = inProgress,
                 TRAIN_FILE_PATH=trainEntryVar.get(), TEST_FILE_PATH=testEntryVar.get()
             )
             master.after(1000, lambda processOut=processResult: update_success(processOut))
@@ -59,14 +59,132 @@ def RF_HP_OPTIM_SUBMIT (master:CTk, loading_gif_path:str, RF_inputs: dict, RF_re
     
     Thread(target=RUN_OPTIMIZATION).start()
 
-def SVM_HP_OPTIM_SUBMIT (master:CTk, loading_gif_path:str, SVM_inputs: dict, SVM_resultsVar: StringVar):
-    print(f'[SVM_HP_OPTIM_SUBMIT]: {SVM_inputs}')
+def SVM_HP_OPTIM_SUBMIT (master:CTk, loading_gif_path:str, SVM_inputs: dict, SVM_resultsVar: StringVar, font: CTkFont, trainEntryVar: StringVar, testEntryVar: StringVar):
+    inProgress = InProgressWindow(master, font, loading_gif_path)
+    inProgress.create()
 
-def LR_HP_OPTIM_SUBMIT (master:CTk, loading_gif_path:str, LR_inputs: dict, SVM_resultsVar: StringVar):
-    print(f'[LR_HP_OPTIM_SUBMIT]: {LR_inputs}')
+    def update_success (processOutput: dict):
+        inProgress.destroy()
+        SVM_resultsVar.set(jsonDumps(processOutput, indent=4))
+        CustomSuccessBox(master, "Calculations Completed !!", font)
+        
+    def update_failure (warnings: list):
+        inProgress.destroy()
+        SVM_resultsVar.set('..')
+        CustomWarningBox(master, warnings, font)
+    
+    # FEATURES
+    if not len(SVM_inputs["FEATURES"].get()):
+        master.after(1000, lambda warnings=['No FEATURES selected !!']: update_failure(warnings))
+        return
 
-def LDA_HP_OPTIM_SUBMIT (master:CTk, loading_gif_path:str, LDA_inputs: dict, LDA_resultsVar: StringVar):
-    print(f'[LDA_HP_OPTIM_SUBMIT]: {LDA_inputs}')
+    SVM_inputs = {
+        'FEATURES': SVM_inputs["FEATURES"].get().split(','),
+        'METHOD': SVM_inputs['METHOD'].get(),
+        'SCORING': SVM_inputs['SCORING'].get(),
+        'CROSS_FOLD_VALID': SVM_inputs['CROSS_FOLD_VALID'].get(),
+        'C': list(map(float, SVM_inputs['C'].get().split(','))),
+        'gamma': SVM_inputs['gamma'].get().split(','),
+        'kernel': SVM_inputs['kernel'].get().split(','),
+    }
+
+    # GUI remains responsive on main thread, the optimization runs on seperate thread
+    def RUN_OPTIMIZATION():
+        try:
+            SVM_resultsVar.set('...')
+            processResult = SVM_HP_OPTIM_PROCESS (
+                HP_OPTIM_INPUTS=SVM_inputs, IN_PROGRESS = inProgress,
+                TRAIN_FILE_PATH=trainEntryVar.get(), TEST_FILE_PATH=testEntryVar.get()
+            )
+            master.after(1000, lambda processOut=processResult: update_success(processOut))
+        except Exception as ex:
+            master.after(1000, lambda warnings=[str(ex)]: update_failure(warnings))
+    
+    Thread(target=RUN_OPTIMIZATION).start()
+
+def LR_HP_OPTIM_SUBMIT (master:CTk, loading_gif_path:str, LR_inputs: dict, LR_resultsVar: StringVar, font: CTkFont, trainEntryVar: StringVar, testEntryVar: StringVar):
+    inProgress = InProgressWindow(master, font, loading_gif_path)
+    inProgress.create()
+
+    def update_success (processOutput: dict):
+        inProgress.destroy()
+        LR_resultsVar.set(jsonDumps(processOutput, indent=4))
+        CustomSuccessBox(master, "Calculations Completed !!", font)
+        
+    def update_failure (warnings: list):
+        inProgress.destroy()
+        LR_resultsVar.set('..')
+        CustomWarningBox(master, warnings, font)
+    
+    # FEATURES
+    if not len(LR_inputs["FEATURES"].get()):
+        master.after(1000, lambda warnings=['No FEATURES selected !!']: update_failure(warnings))
+        return
+
+    LR_inputs = {
+        'FEATURES': LR_inputs["FEATURES"].get().split(','),
+        'METHOD': LR_inputs['METHOD'].get(),
+        'SCORING': LR_inputs['SCORING'].get(),
+        'CROSS_FOLD_VALID': LR_inputs['CROSS_FOLD_VALID'].get(),
+        'C': list(map(float, LR_inputs['C'].get().split(','))),
+        'penalty': LR_inputs['penalty'].get().split(','),
+        'solver': LR_inputs['solver'].get().split(','),
+    }
+
+    # GUI remains responsive on main thread, the optimization runs on seperate thread
+    def RUN_OPTIMIZATION():
+        try:
+            LR_resultsVar.set('...')
+            processResult = LR_HP_OPTIM_PROCESS (
+                HP_OPTIM_INPUTS=LR_inputs, IN_PROGRESS = inProgress,
+                TRAIN_FILE_PATH=trainEntryVar.get(), TEST_FILE_PATH=testEntryVar.get()
+            )
+            master.after(1000, lambda processOut=processResult: update_success(processOut))
+        except Exception as ex:
+            master.after(1000, lambda warnings=[str(ex)]: update_failure(warnings))
+    
+    Thread(target=RUN_OPTIMIZATION).start()
+
+def LDA_HP_OPTIM_SUBMIT (master:CTk, loading_gif_path:str, LDA_inputs: dict, LDA_resultsVar: StringVar, font: CTkFont, trainEntryVar: StringVar, testEntryVar: StringVar):
+    inProgress = InProgressWindow(master, font, loading_gif_path)
+    inProgress.create()
+
+    def update_success (processOutput: dict):
+        inProgress.destroy()
+        LDA_resultsVar.set(jsonDumps(processOutput, indent=4))
+        CustomSuccessBox(master, "Calculations Completed !!", font)
+        
+    def update_failure (warnings: list):
+        inProgress.destroy()
+        LDA_resultsVar.set('..')
+        CustomWarningBox(master, warnings, font)
+    
+    # FEATURES
+    if not len(LDA_inputs["FEATURES"].get()):
+        master.after(1000, lambda warnings=['No FEATURES selected !!']: update_failure(warnings))
+        return
+
+    LDA_inputs = {
+        'FEATURES': LDA_inputs["FEATURES"].get().split(','),
+        'METHOD': LDA_inputs['METHOD'].get(),
+        'SCORING': LDA_inputs['SCORING'].get(),
+        'CROSS_FOLD_VALID': LDA_inputs['CROSS_FOLD_VALID'].get(),
+        'solver': LDA_inputs['solver'].get().split(','),
+    }
+
+    # GUI remains responsive on main thread, the optimization runs on seperate thread
+    def RUN_OPTIMIZATION():
+        try:
+            LDA_resultsVar.set('...')
+            processResult = LDA_HP_OPTIM_PROCESS (
+                HP_OPTIM_INPUTS=LDA_inputs, IN_PROGRESS = inProgress,
+                TRAIN_FILE_PATH=trainEntryVar.get(), TEST_FILE_PATH=testEntryVar.get()
+            )
+            master.after(1000, lambda processOut=processResult: update_success(processOut))
+        except Exception as ex:
+            master.after(1000, lambda warnings=[str(ex)]: update_failure(warnings))
+    
+    Thread(target=RUN_OPTIMIZATION).start()
 
 def KNN_HP_OPTIM_SUBMIT (master:CTk, loading_gif_path:str, KNN_inputs: dict, KNN_resultsVar: StringVar):
     print(f'[KNN_HP_OPTIM_SUBMIT]: {KNN_inputs}')
