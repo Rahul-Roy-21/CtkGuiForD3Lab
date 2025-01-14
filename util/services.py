@@ -186,11 +186,96 @@ def LDA_HP_OPTIM_SUBMIT (master:CTk, loading_gif_path:str, LDA_inputs: dict, LDA
     
     Thread(target=RUN_OPTIMIZATION).start()
 
-def KNN_HP_OPTIM_SUBMIT (master:CTk, loading_gif_path:str, KNN_inputs: dict, KNN_resultsVar: StringVar):
-    print(f'[KNN_HP_OPTIM_SUBMIT]: {KNN_inputs}')
+def KNN_HP_OPTIM_SUBMIT (master:CTk, loading_gif_path:str, KNN_inputs: dict, KNN_resultsVar: StringVar, font: CTkFont, trainEntryVar: StringVar, testEntryVar: StringVar):
+    inProgress = InProgressWindow(master, font, loading_gif_path)
+    inProgress.create()
 
-def GB_HP_OPTIM_SUBMIT (master:CTk, loading_gif_path:str, GB_inputs: dict, GB_resultsVar: StringVar):
-    print(f'[GB_HP_OPTIM_SUBMIT]: {GB_inputs}')
+    def update_success (processOutput: dict):
+        inProgress.destroy()
+        KNN_resultsVar.set(jsonDumps(processOutput, indent=4))
+        CustomSuccessBox(master, "Calculations Completed !!", font)
+        
+    def update_failure (warnings: list):
+        inProgress.destroy()
+        KNN_resultsVar.set('..')
+        CustomWarningBox(master, warnings, font)
+    
+    # FEATURES
+    if not len(KNN_inputs["FEATURES"].get()):
+        master.after(1000, lambda warnings=['No FEATURES selected !!']: update_failure(warnings))
+        return
+
+    KNN_inputs = {
+        'FEATURES': KNN_inputs["FEATURES"].get().split(','),
+        'METHOD': KNN_inputs['METHOD'].get(),
+        'SCORING': KNN_inputs['SCORING'].get(),
+        'CROSS_FOLD_VALID': KNN_inputs['CROSS_FOLD_VALID'].get(),
+        'p': {k:v.get() for k,v in KNN_inputs['p'].items()},
+        'leaf_size': {k:v.get() for k,v in KNN_inputs['leaf_size'].items()},
+        'n_neighbors': {k:v.get() for k,v in KNN_inputs['n_neighbors'].items()},
+    }
+
+    # GUI remains responsive on main thread, the optimization runs on seperate thread
+    def RUN_OPTIMIZATION():
+        try:
+            KNN_resultsVar.set('...')
+            processResult = KNN_HP_OPTIM_PROCESS (
+                HP_OPTIM_INPUTS=KNN_inputs, IN_PROGRESS = inProgress,
+                TRAIN_FILE_PATH=trainEntryVar.get(), TEST_FILE_PATH=testEntryVar.get()
+            )
+            master.after(1000, lambda processOut=processResult: update_success(processOut))
+        except Exception as ex:
+            master.after(1000, lambda warnings=[str(ex)]: update_failure(warnings))
+    
+    Thread(target=RUN_OPTIMIZATION).start()
+
+def GB_HP_OPTIM_SUBMIT (master:CTk, loading_gif_path:str, GB_inputs: dict, GB_resultsVar: StringVar, font: CTkFont, trainEntryVar: StringVar, testEntryVar: StringVar):
+    inProgress = InProgressWindow(master, font, loading_gif_path)
+    inProgress.create()
+
+    def update_success (processOutput: dict):
+        inProgress.destroy()
+        GB_resultsVar.set(jsonDumps(processOutput, indent=4))
+        CustomSuccessBox(master, "Calculations Completed !!", font)
+        
+    def update_failure (warnings: list):
+        inProgress.destroy()
+        GB_resultsVar.set('..')
+        CustomWarningBox(master, warnings, font)
+    
+    # FEATURES
+    if not len(GB_inputs["FEATURES"].get()):
+        master.after(1000, lambda warnings=['No FEATURES selected !!']: update_failure(warnings))
+        return
+
+    GB_inputs = {
+        'FEATURES': GB_inputs["FEATURES"].get().split(','),
+        'METHOD': GB_inputs['METHOD'].get(),
+        'SCORING': GB_inputs['SCORING'].get(),
+        'CROSS_FOLD_VALID': GB_inputs['CROSS_FOLD_VALID'].get(),
+        'n_estimators': {k:v.get() for k,v in GB_inputs['n_estimators'].items()},
+        'learning_rate': {k:v.get() for k,v in GB_inputs['learning_rate'].items()},
+        'criterion': GB_inputs['criterion'].get().split(','),
+        'max_depth': {k:v.get() for k,v in GB_inputs['max_depth'].items()},
+        'min_samples_split': {k:v.get() for k,v in GB_inputs['min_samples_split'].items()},
+        'min_samples_leaf': {k:v.get() for k,v in GB_inputs['min_samples_leaf'].items()},
+    }
+
+    # GUI remains responsive on main thread, the optimization runs on seperate thread
+    def RUN_OPTIMIZATION():
+        try:
+            GB_resultsVar.set('...')
+            processResult = GB_HP_OPTIM_PROCESS (
+                HP_OPTIM_INPUTS=GB_inputs, IN_PROGRESS = inProgress,
+                TRAIN_FILE_PATH=trainEntryVar.get(), TEST_FILE_PATH=testEntryVar.get()
+            )
+            master.after(1000, lambda processOut=processResult: update_success(processOut))
+        except Exception as ex:
+            master.after(1000, lambda warnings=[str(ex)]: update_failure(warnings))
+    
+    Thread(target=RUN_OPTIMIZATION).start()
+
+
 
 def RF_MODEL_BUILD_SUBMIT (master:CTk, loading_gif_path:str, RFmb_inputs: dict, RFmb_resultsVar: StringVar, font: CTkFont, trainEntryVar: StringVar, testEntryVar: StringVar):
     

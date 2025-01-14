@@ -14,6 +14,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import cross_val_score
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, matthews_corrcoef, cohen_kappa_score, roc_auc_score
 from sklearn.metrics import confusion_matrix, classification_report, RocCurveDisplay, roc_curve
+import numpy as np
 import matplotlib.pyplot as plt
 import plotly.io as pio
 from matplotlib import rcParams
@@ -209,7 +210,9 @@ def MODEL_BUILD_GENERATE_RESULTS (regressor, featureList: list, trainFilePath: s
 PARAM_GRID_KEYS_NOT_FOR_HP_OPTIM = {'FEATURES','METHOD','SCORING','CROSS_FOLD_VALID'}
 
 def _MAP_PARAMRANGE_TO_ACTUAL_LISTOFVALUES (rangeMap: dict):
-    #print('RANGE_MAP: ', rangeMap)
+    if type(rangeMap['_FROM'])==float and '_STEP' not in rangeMap.keys():
+        return np.linspace(rangeMap['_FROM'], rangeMap['_TO'], num=25)
+    
     if '_STEP' in rangeMap.keys():
         return list(range(rangeMap['_FROM'], rangeMap['_TO']+1, rangeMap['_STEP']))
     return list(range(rangeMap['_FROM'], rangeMap['_TO']+1))
@@ -530,7 +533,10 @@ def LDA_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
                 solver=solver, 
                 shrinkage=shrinkage
             )
-            return cross_val_score(model, x_train_scaled, y_train, cv=5, scoring="accuracy").mean()
+            return cross_val_score(
+                model, x_train_scaled, y_train, 
+                scoring=PROCESS_PARAMS['SCORING'], cv=PROCESS_PARAMS['CROSS_FOLD_VALID']
+            ).mean()
         
         IN_PROGRESS._CREATE_OPTUNA_PROGRESS()
         lda_study = optuna.create_study(direction='maximize', study_name='LinearDiscriminantAnalysis')
@@ -651,7 +657,10 @@ def LR_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
                 model = LogisticRegression(
                     C=C, penalty=penalty, solver=solver, max_iter=10000, random_state=42
                 )
-            return cross_val_score(model, x_train_scaled, y_train, cv=5, scoring="accuracy").mean()
+            return cross_val_score(
+                model, x_train_scaled, y_train, 
+                scoring=PROCESS_PARAMS['SCORING'], cv=PROCESS_PARAMS['CROSS_FOLD_VALID']
+            ).mean()
         
         IN_PROGRESS._CREATE_OPTUNA_PROGRESS()
         lr_study = optuna.create_study(direction='maximize', study_name='LogisticRegression')
@@ -663,6 +672,246 @@ def LR_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
         return results
     else:
         raise Exception(f"Unknown Method for HP_OPTIMIZATION: {PROCESS_PARAMS['METHOD']}")
+
+def KNN_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_PATH: str, IN_PROGRESS: InProgressWindow):
+    print(f'[KNN_HYPERPARAMS_OPTIMIZE_PROCESS]:\n{jsonDumps(HP_OPTIM_INPUTS, indent=5)}')
+    # PROCESS_PARAMS stores the FEATURES, METHOD, SCORING, CV
+    PROCESS_PARAMS = {k:v for k,v in HP_OPTIM_INPUTS.items() if k in PARAM_GRID_KEYS_NOT_FOR_HP_OPTIM}
+    trainDF = pd.read_excel(TRAIN_FILE_PATH)
+    columnsToSelect = PROCESS_PARAMS['FEATURES']
+    x_train = trainDF.loc[:, columnsToSelect]
+    y_train = trainDF.iloc[:, -1]
+
+    # GRID_SEARCH
+    if PROCESS_PARAMS['METHOD']=='GridSearchCV':
+        knn_estimator = KNeighborsClassifier()
+        _PARAM_GRID = {}
+        for k,v in HP_OPTIM_INPUTS.items():
+            if k in PARAM_GRID_KEYS_NOT_FOR_HP_OPTIM:
+                continue
+            _PARAM_GRID[k] = _MAP_PARAMRANGE_TO_ACTUAL_LISTOFVALUES(v) if type(v)==dict else v
+        print('PARAM_GRID: ', _PARAM_GRID)
+
+        HP_OPTIM_METHOD_INSTANCE = GridSearchCV(
+            estimator=knn_estimator, param_grid=_PARAM_GRID, 
+            scoring=PROCESS_PARAMS['SCORING'], cv=PROCESS_PARAMS['CROSS_FOLD_VALID'], 
+            verbose=2, n_jobs=4
+        )
+        HP_OPTIM_METHOD_INSTANCE.fit(x_train, y_train)
+
+        xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
+        CHECK_DIR('output')
+        xls_out.to_excel(
+            excel_writer=os.path.join('output', f"KNN_GS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
+            index=False
+        )
+        results = HP_OPTIM_METHOD_INSTANCE.best_params_
+        print('FINISHED KNN_HP_OPTIM_PROCESS !!')
+
+        # [CLEAN-UP after parallel processing]  
+        # UserWarning: resource_tracker: There appear to be 10 leaked semlock objects to clean up at shutdown
+        del HP_OPTIM_METHOD_INSTANCE
+        hp_optim_gc.collect()
+        return results
+
+    elif PROCESS_PARAMS['METHOD']=='RandomizedSearchCV':
+        knn_estimator = KNeighborsClassifier()
+        _PARAM_GRID = {}
+        for k,v in HP_OPTIM_INPUTS.items():
+            if k in PARAM_GRID_KEYS_NOT_FOR_HP_OPTIM:
+                continue
+            _PARAM_GRID[k] = _MAP_PARAMRANGE_TO_ACTUAL_LISTOFVALUES(v) if type(v)==dict else v
+        print('PARAM_GRID: ', _PARAM_GRID)
+
+        HP_OPTIM_METHOD_INSTANCE = RandomizedSearchCV(
+            estimator=knn_estimator, param_distributions=_PARAM_GRID, 
+            scoring=PROCESS_PARAMS['SCORING'], cv=PROCESS_PARAMS['CROSS_FOLD_VALID'], 
+            verbose=2, n_jobs=4
+        )
+        HP_OPTIM_METHOD_INSTANCE.fit(x_train, y_train)
+
+        xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
+        CHECK_DIR('output')
+        xls_out.to_excel(
+            excel_writer=os.path.join('output', f"KNN_RS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
+            index=False
+        )
+        results = HP_OPTIM_METHOD_INSTANCE.best_params_
+        print('FINISHED KNN_HP_OPTIM_PROCESS !!')
+
+        # [CLEAN-UP after parallel processing]  
+        # UserWarning: resource_tracker: There appear to be 10 leaked semlock objects to clean up at shutdown
+        del HP_OPTIM_METHOD_INSTANCE
+        hp_optim_gc.collect()
+        return results
+        
+    elif PROCESS_PARAMS['METHOD']=='Optuna':
+        scaler = StandardScaler()
+        x_train_scaled = scaler.fit_transform(x_train)
+        _PARAM_GRID = {k:v for k,v in HP_OPTIM_INPUTS.items() if k not in PARAM_GRID_KEYS_NOT_FOR_HP_OPTIM}
+        print('PARAM_GRID: ', _PARAM_GRID)
+
+        def KNN_OBJECTIVE (trial):
+            n_neighbors = trial.suggest_int(
+                'n_neighbors', _PARAM_GRID['n_neighbors']['_FROM'], _PARAM_GRID['n_neighbors']['_TO']
+            )
+            leaf_size = trial.suggest_int(
+                'leaf_size', _PARAM_GRID['leaf_size']['_FROM'], _PARAM_GRID['leaf_size']['_TO']
+            )
+            p = trial.suggest_int(
+                'p', _PARAM_GRID['p']['_FROM'], _PARAM_GRID['p']['_TO']
+            )
+            model = KNeighborsClassifier(
+                n_neighbors=n_neighbors, 
+                leaf_size=leaf_size, 
+                p=p
+            )
+            return cross_val_score(
+                model, x_train_scaled, y_train, 
+                scoring=PROCESS_PARAMS['SCORING'], cv=PROCESS_PARAMS['CROSS_FOLD_VALID']
+            ).mean()
+        
+        IN_PROGRESS._CREATE_OPTUNA_PROGRESS()
+        knn_study = optuna.create_study(direction='maximize', study_name='KNearestNeighbors')
+        knn_study.optimize(
+            func=KNN_OBJECTIVE, n_trials=OPTUNA_TOTAL_TRIALS*10, callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
+        )
+        IN_PROGRESS._COMPLETE_OPTUNA_PROGRESS()
+        results = knn_study.best_params
+        return results
+    else:
+        raise Exception(f"Unknown Method for HP_OPTIMIZATION: {PROCESS_PARAMS['METHOD']}")
+
+def GB_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_PATH: str, IN_PROGRESS: InProgressWindow):
+    print(f'[GB_HYPERPARAMS_OPTIMIZE_PROCESS]:\n{jsonDumps(HP_OPTIM_INPUTS, indent=5)}')
+    # PROCESS_PARAMS stores the FEATURES, METHOD, SCORING, CV
+    PROCESS_PARAMS = {k:v for k,v in HP_OPTIM_INPUTS.items() if k in PARAM_GRID_KEYS_NOT_FOR_HP_OPTIM}
+    trainDF = pd.read_excel(TRAIN_FILE_PATH)
+    columnsToSelect = PROCESS_PARAMS['FEATURES']
+    x_train = trainDF.loc[:, columnsToSelect]
+    y_train = trainDF.iloc[:, -1]
+
+    # GRID_SEARCH
+    if PROCESS_PARAMS['METHOD']=='GridSearchCV':
+        gb_estimator = GradientBoostingClassifier(random_state=0)
+        _PARAM_GRID = {}
+        for k,v in HP_OPTIM_INPUTS.items():
+            if k in PARAM_GRID_KEYS_NOT_FOR_HP_OPTIM:
+                continue
+            _PARAM_GRID[k] = _MAP_PARAMRANGE_TO_ACTUAL_LISTOFVALUES(v) if type(v)==dict else v
+        print('PARAM_GRID: ', _PARAM_GRID)
+
+        HP_OPTIM_METHOD_INSTANCE = GridSearchCV(
+            estimator=gb_estimator, param_grid=_PARAM_GRID, 
+            scoring=PROCESS_PARAMS['SCORING'], cv=PROCESS_PARAMS['CROSS_FOLD_VALID'], 
+            verbose=2, n_jobs=4
+        )
+        HP_OPTIM_METHOD_INSTANCE.fit(x_train, y_train)
+
+        xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
+        CHECK_DIR('output')
+        xls_out.to_excel(
+            excel_writer=os.path.join('output', f"RFC_GS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
+            index=False
+        )
+        results = HP_OPTIM_METHOD_INSTANCE.best_params_
+        print('FINISHED GB_HP_OPTIM_PROCESS !!')
+
+        # [CLEAN-UP after parallel processing]  
+        # UserWarning: resource_tracker: There appear to be 10 leaked semlock objects to clean up at shutdown
+        del HP_OPTIM_METHOD_INSTANCE
+        hp_optim_gc.collect()
+        return results
+
+    elif PROCESS_PARAMS['METHOD']=='RandomizedSearchCV':
+        gb_estimator = GradientBoostingClassifier(random_state=0)
+        _PARAM_GRID = {}
+        for k,v in HP_OPTIM_INPUTS.items():
+            if k in PARAM_GRID_KEYS_NOT_FOR_HP_OPTIM:
+                continue
+            _PARAM_GRID[k] = _MAP_PARAMRANGE_TO_ACTUAL_LISTOFVALUES(v) if type(v)==dict else v
+        print('PARAM_GRID: ', _PARAM_GRID)
+
+        HP_OPTIM_METHOD_INSTANCE = RandomizedSearchCV(
+            estimator=gb_estimator, param_distributions=_PARAM_GRID, 
+            scoring=PROCESS_PARAMS['SCORING'], cv=PROCESS_PARAMS['CROSS_FOLD_VALID'], 
+            verbose=2, n_jobs=4
+        )
+        HP_OPTIM_METHOD_INSTANCE.fit(x_train, y_train)
+
+        xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
+        CHECK_DIR('output')
+        xls_out.to_excel(
+            excel_writer=os.path.join('output', f"RFC_RS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
+            index=False
+        )
+        results = HP_OPTIM_METHOD_INSTANCE.best_params_
+        print('FINISHED GB_HP_OPTIM_PROCESS !!')
+
+        # [CLEAN-UP after parallel processing]  
+        # UserWarning: resource_tracker: There appear to be 10 leaked semlock objects to clean up at shutdown
+        del HP_OPTIM_METHOD_INSTANCE
+        hp_optim_gc.collect()
+        return results
+        
+    elif PROCESS_PARAMS['METHOD']=='Optuna':
+        scaler = StandardScaler()
+        x_train_scaled = scaler.fit_transform(x_train)
+        _PARAM_GRID = {k:v for k,v in HP_OPTIM_INPUTS.items() if k not in PARAM_GRID_KEYS_NOT_FOR_HP_OPTIM}
+        print('PARAM_GRID: ', _PARAM_GRID)
+
+        def GB_OBJECTIVE (trial:optuna.Trial):
+            n_estimators = trial.suggest_int(
+                'n_estimators', 
+                _PARAM_GRID['n_estimators']['_FROM'], _PARAM_GRID['n_estimators']['_TO'], step=_PARAM_GRID['n_estimators']['_STEP']
+            )
+            learning_rate = trial.suggest_float(
+                'learning_rate', 
+                _PARAM_GRID['learning_rate']['_FROM'], _PARAM_GRID['learning_rate']['_TO'],
+            )
+            criterion = trial.suggest_categorical(
+                'criterion', _PARAM_GRID['criterion']
+            )
+            max_depth = trial.suggest_int(
+                'max_depth', 
+                _PARAM_GRID['max_depth']['_FROM'], _PARAM_GRID['max_depth']['_TO']
+            )
+            min_samples_split = trial.suggest_int(
+                'min_samples_split', 
+                _PARAM_GRID['min_samples_split']['_FROM'], _PARAM_GRID['min_samples_split']['_TO']
+            )
+            min_samples_leaf = trial.suggest_int(
+                'min_samples_leaf', 
+                _PARAM_GRID['min_samples_leaf']['_FROM'], _PARAM_GRID['min_samples_leaf']['_TO']
+            )
+            model = GradientBoostingClassifier(
+                n_estimators=n_estimators, 
+                learning_rate=learning_rate,
+                criterion=criterion,
+                max_depth=max_depth, 
+                min_samples_split=min_samples_split, 
+                min_samples_leaf=min_samples_leaf,
+                random_state=42
+            )
+            # Perform cross-validation and return the average score
+            return cross_val_score(
+                estimator=model, X=x_train_scaled, y=y_train, 
+                cv=PROCESS_PARAMS['CROSS_FOLD_VALID'], scoring=PROCESS_PARAMS['SCORING']
+            ).mean()
+        
+        IN_PROGRESS._CREATE_OPTUNA_PROGRESS()
+        gb_study = optuna.create_study(direction='maximize', study_name='GradientBoosting')
+        gb_study.optimize(
+            func=GB_OBJECTIVE, n_trials=OPTUNA_TOTAL_TRIALS, callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
+        )
+        IN_PROGRESS._COMPLETE_OPTUNA_PROGRESS()
+        results = gb_study.best_params
+        return results
+    else:
+        raise Exception(f"Unknown Method for HP_OPTIMIZATION: {PROCESS_PARAMS['METHOD']}")
+
+
+#---------MODEL BUILD -----------
 
 def RF_MODEL_BUILD_PROCESS (RfMB_ValidatedInputs: dict, trainFilePath: str, testFilePath: str):
     FEATURES_LIST = RfMB_ValidatedInputs["FEATURES"]

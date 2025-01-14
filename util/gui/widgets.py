@@ -237,9 +237,11 @@ class MyFloatingLogEntry(CTkFrame):
 
     def decrement(self):
         """Divide the current value by 10, ensuring it doesn't go below min_value."""
-        new_value = self.current_value.get() / 10
-        if new_value >= self.min_value:
-            self.current_value.set(new_value)
+        # new_value = self.current_value.get() / 10
+        # if new_value >= self.min_value:
+        #     self.current_value.set(new_value)
+        new_value = max(self.current_value.get() / 10, self.min_value)
+        self.current_value.set(new_value)
 
     def start_repeat(self, command):
         """Start repeating the given command."""
