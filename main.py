@@ -1,5 +1,6 @@
 import os
 import customtkinter as ctk
+from PIL import Image, ImageTk
 from data import DATA as CONFIG_DATA
 from util.services import *
 from util.gui.panels import *
@@ -79,6 +80,10 @@ ALGO_MAP = {
 }
 HP_OPTIM_SELECTED_ALGORITHM = ctk.StringVar()
 MODEL_BUILD_SELECTED_ALGORITHM = ctk.StringVar()
+
+icon_img = Image.open(D3_LAB_LOGO['PATH'])
+icon_photo = ImageTk.PhotoImage(icon_img)
+root.wm_iconphoto(True, icon_photo)
 
 # DATASET FRAME
 DataSetPanel(

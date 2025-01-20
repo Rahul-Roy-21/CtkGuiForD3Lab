@@ -16,7 +16,7 @@ DATA = {
     },
     "fonts": {
         "my_font_1": {
-            "family":  "merienda",
+            "family":  "Baghdad",
             "size": 12,
             "weight": "normal"
         }

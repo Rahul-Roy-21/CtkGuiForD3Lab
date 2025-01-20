@@ -278,8 +278,7 @@ def GB_HP_OPTIM_SUBMIT (master:CTk, loading_gif_path:str, GB_inputs: dict, GB_re
 
 
 def RF_MODEL_BUILD_SUBMIT (master:CTk, loading_gif_path:str, RFmb_inputs: dict, RFmb_resultsVar: StringVar, font: CTkFont, trainEntryVar: StringVar, testEntryVar: StringVar):
-    
-    inProgress = InProgressWindow(master, loading_gif_path)
+    inProgress = InProgressWindow(master, font, loading_gif_path)
     inProgress.create()
 
     def update_success (processOutput: dict):
@@ -379,7 +378,7 @@ def RF_MODEL_BUILD_SUBMIT (master:CTk, loading_gif_path:str, RFmb_inputs: dict, 
         master.after(1000, lambda warnings=WARNINGS: update_failure(warnings))
 
 def SVM_MODEL_BUILD_SUBMIT (master:CTk, loading_gif_path:str, SVMmb_inputs: dict, SVMmb_resultsVar: StringVar, font: CTkFont, trainEntryVar: StringVar, testEntryVar: StringVar):
-    inProgress = InProgressWindow(master, loading_gif_path)
+    inProgress = InProgressWindow(master, font, loading_gif_path)
     inProgress.create()
     
     def update_success (processOutput: dict):
@@ -454,7 +453,7 @@ def SVM_MODEL_BUILD_SUBMIT (master:CTk, loading_gif_path:str, SVMmb_inputs: dict
         master.after(1000, lambda warnings=WARNINGS: update_failure(warnings))
 
 def LDA_MODEL_BUILD_SUBMIT (master:CTk, loading_gif_path:str, LDAmb_inputs: dict, LDAmb_resultsVar: StringVar, font: CTkFont, trainEntryVar: StringVar, testEntryVar: StringVar):
-    inProgress = InProgressWindow(master, loading_gif_path)
+    inProgress = InProgressWindow(master, font, loading_gif_path)
     inProgress.create()
     
     def update_success (processOutput: dict):
@@ -518,7 +517,7 @@ def LDA_MODEL_BUILD_SUBMIT (master:CTk, loading_gif_path:str, LDAmb_inputs: dict
         master.after(1000, lambda warnings=WARNINGS: update_failure(warnings))
 
 def LR_MODEL_BUILD_SUBMIT (master:CTk, loading_gif_path:str, LRmb_inputs: dict, LRmb_resultsVar: StringVar, font: CTkFont, trainEntryVar: StringVar, testEntryVar: StringVar):
-    inProgress = InProgressWindow(master, loading_gif_path)
+    inProgress = InProgressWindow(master, font, loading_gif_path)
     inProgress.create()
     
     def update_success (processOutput: dict):
@@ -608,7 +607,7 @@ def LR_MODEL_BUILD_SUBMIT (master:CTk, loading_gif_path:str, LRmb_inputs: dict, 
 
 def KNN_MODEL_BUILD_SUBMIT (master:CTk, loading_gif_path:str, KNNmb_inputs: dict, KNNmb_resultsVar: StringVar, font: CTkFont, trainEntryVar: StringVar, testEntryVar: StringVar):
     
-    inProgress = InProgressWindow(master, loading_gif_path)
+    inProgress = InProgressWindow(master, font, loading_gif_path)
     inProgress.create()
 
     def update_success (processOutput: dict):
@@ -680,7 +679,7 @@ def KNN_MODEL_BUILD_SUBMIT (master:CTk, loading_gif_path:str, KNNmb_inputs: dict
 
 def GB_MODEL_BUILD_SUBMIT (master:CTk, loading_gif_path:str, GBmb_inputs: dict, RFmb_resultsVar: StringVar, font: CTkFont, trainEntryVar: StringVar, testEntryVar: StringVar):
     
-    inProgress = InProgressWindow(master, loading_gif_path)
+    inProgress = InProgressWindow(master, font, loading_gif_path)
     inProgress.create()
 
     def update_success (processOutput: dict):
