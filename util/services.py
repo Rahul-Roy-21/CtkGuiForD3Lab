@@ -3,6 +3,7 @@ from util.gui.widgets import InProgressWindow, CustomWarningBox, CustomSuccessBo
 from threading import Thread
 from json import dumps as jsonDumps
 from util.ml.functions import *
+from ast import literal_eval as ast_literal_eval
 
 def convertStrToIntOrFloat(value: str):
     return float(value) if '.' in value else int(value)
@@ -275,6 +276,57 @@ def GB_HP_OPTIM_SUBMIT (master:CTk, loading_gif_path:str, GB_inputs: dict, GB_re
     
     Thread(target=RUN_OPTIMIZATION).start()
 
+def MLP_HP_OPTIM_SUBMIT (master:CTk, loading_gif_path:str, MLP_inputs: dict, MLP_resultsVar: StringVar, font: CTkFont, trainEntryVar: StringVar, testEntryVar: StringVar):
+    inProgress = InProgressWindow(master, font, loading_gif_path)
+    inProgress.create()
+
+    def update_success (processOutput: dict):
+        inProgress.destroy()
+        MLP_resultsVar.set(jsonDumps(processOutput, indent=4))
+        CustomSuccessBox(master, "Calculations Completed !!", font)
+        
+    def update_failure (warnings: list):
+        inProgress.destroy()
+        MLP_resultsVar.set('..')
+        CustomWarningBox(master, warnings, font)
+    
+    # FEATURES
+    if not len(MLP_inputs["FEATURES"].get()):
+        master.after(1000, lambda warnings=['No FEATURES selected !!']: update_failure(warnings))
+        return
+
+    MLP_inputs = {
+        'FEATURES': MLP_inputs["FEATURES"].get().split(','),
+        'METHOD': MLP_inputs['METHOD'].get(),
+        'SCORING': MLP_inputs['SCORING'].get(),
+        'CROSS_FOLD_VALID': MLP_inputs['CROSS_FOLD_VALID'].get(),
+        'hidden_layer_size': {k:v.get() for k,v in MLP_inputs['hidden_layer_size'].items()},
+        'num_of_hidden_layers': {k:v.get() for k,v in MLP_inputs['num_of_hidden_layers'].items()},
+        'activation': MLP_inputs['activation'].get().split(','),
+        'solver': MLP_inputs['solver'].get().split(','),
+        'alpha': MLP_inputs['alpha'].get().split(','),
+        'learning_rate': MLP_inputs['learning_rate'].get().split(','),
+    }
+
+    # GUI remains responsive on main thread, the optimization runs on seperate thread
+    def RUN_OPTIMIZATION():
+        MLP_resultsVar.set('...')
+        processResult = MLP_HP_OPTIM_PROCESS (
+            HP_OPTIM_INPUTS=MLP_inputs, IN_PROGRESS = inProgress,
+            TRAIN_FILE_PATH=trainEntryVar.get(), TEST_FILE_PATH=testEntryVar.get()
+        )
+        master.after(1000, lambda processOut=processResult: update_success(processOut))
+        # try:
+        #     MLP_resultsVar.set('...')
+        #     processResult = MLP_HP_OPTIM_PROCESS (
+        #         HP_OPTIM_INPUTS=MLP_inputs, IN_PROGRESS = inProgress,
+        #         TRAIN_FILE_PATH=trainEntryVar.get(), TEST_FILE_PATH=testEntryVar.get()
+        #     )
+        #     master.after(1000, lambda processOut=processResult: update_success(processOut))
+        # except Exception as ex:
+        #     master.after(1000, lambda warnings=[str(ex)]: update_failure(warnings))
+    
+    Thread(target=RUN_OPTIMIZATION).start()
 
 
 def RF_MODEL_BUILD_SUBMIT (master:CTk, loading_gif_path:str, RFmb_inputs: dict, RFmb_resultsVar: StringVar, font: CTkFont, trainEntryVar: StringVar, testEntryVar: StringVar):
@@ -817,6 +869,124 @@ def GB_MODEL_BUILD_SUBMIT (master:CTk, loading_gif_path:str, GBmb_inputs: dict, 
         try:
             processResultDict = GB_MODEL_BUILD_PROCESS(
                 GbMB_ValidatedInputs=GBmb_out, 
+                trainFilePath=trainEntryVar.get(),
+                testFilePath=testEntryVar.get()
+            )
+            master.after(1000, lambda processOut=processResultDict: update_success(processOut))
+        except Exception as ex:
+            master.after(1000, lambda warnings=[str(ex)]: update_failure(warnings))
+    else:
+        master.after(1000, lambda warnings=WARNINGS: update_failure(warnings))
+
+def MLP_MODEL_BUILD_SUBMIT (master:CTk, loading_gif_path:str, MLPmb_inputs: dict, MLPmb_resultsVar: StringVar, font: CTkFont, trainEntryVar: StringVar, testEntryVar: StringVar):
+    inProgress = InProgressWindow(master, font, loading_gif_path)
+    inProgress.create()
+
+    def update_success (processOutput: dict):
+        inProgress.destroy()
+        MLPmb_resultsVar.set(jsonDumps(processOutput, indent=4))
+        CustomSuccessBox(master, "Calculations Completed !!", font)
+        
+    def update_failure (warnings: list):
+        inProgress.destroy()
+        MLPmb_resultsVar.set('..')
+        CustomWarningBox(master, warnings, font)
+    
+    MLPmb_out = {k:v.get() for k,v in MLPmb_inputs.items()}
+    WARNINGS = []
+
+    # FEATURES
+    if not len(MLPmb_out["FEATURES"]):
+        master.after(1000, lambda warnings=['No FEATURES selected !!']: update_failure(warnings))
+        return
+    else:
+        MLPmb_out["FEATURES"] = MLPmb_out["FEATURES"].split(',')
+    
+    # hidden_layer_sizes
+    try:
+        MLPmb_out["hidden_layer_sizes"] = tuple(
+            ast_literal_eval(MLPmb_out["hidden_layer_sizes"])
+        )
+    except:
+        WARNINGS.append("hidden_layer_sizes must be array-like of shape.\nThe ith element represents the number of neurons in the ith hidden layer.")
+    
+    # alpha
+    try:
+        MLPmb_out["alpha"] = float(MLPmb_out["alpha"])
+    except:
+        WARNINGS.append("alpha must be an FLOAT")
+
+    # learning_rate_init
+    try:
+        MLPmb_out["learning_rate_init"] = float(MLPmb_out["learning_rate_init"])
+    except:
+        WARNINGS.append("learning_rate_init must be an FLOAT")
+    
+    # power_t
+    try:
+        MLPmb_out["power_t"] = float(MLPmb_out["power_t"])
+    except:
+        WARNINGS.append("power_t must be an FLOAT")
+    
+    # max_iter
+    try:
+        MLPmb_out["max_iter"] = int(MLPmb_out["max_iter"])
+    except:
+        WARNINGS.append("max_iter must be an INTEGER")
+
+    # batch_size
+    try:
+        MLPmb_out["batch_size"] = 'auto' if MLPmb_out["batch_size"].lower()=='auto' else int(MLPmb_out["batch_size"])
+    except:
+        WARNINGS.append("batch_size must be an INTEGER or 'auto'")
+
+    # random_state
+    try:
+        MLPmb_out["random_state"] = None if MLPmb_out["random_state"].lower()=='none' else int(MLPmb_out["random_state"])
+    except:
+        WARNINGS.append("random_state must be an INTEGER or 'None'")
+
+    # tol
+    try:
+        MLPmb_out["tol"] = float(MLPmb_out["tol"])
+    except:
+        WARNINGS.append("tol must be an FLOAT")
+
+    # momentum
+    try:
+        MLPmb_out["momentum"] = float(MLPmb_out["momentum"])
+    except:
+        WARNINGS.append("momentum must be an FLOAT")
+
+    # validation_fraction
+    try:
+        MLPmb_out["validation_fraction"] = float(MLPmb_out["validation_fraction"])
+    except:
+        WARNINGS.append("validation_fraction must be an FLOAT")
+
+    # n_iter_no_change
+    try:
+        MLPmb_out["n_iter_no_change"] = int(MLPmb_out["n_iter_no_change"])
+    except:
+        WARNINGS.append("n_iter_no_change must be an INTEGER")
+    
+    # max_fun
+    try:
+        MLPmb_out["max_fun"] = int(MLPmb_out["max_fun"])
+    except:
+        WARNINGS.append("max_fun must be an INTEGER")
+
+    MLPmb_out["shuffle"] = bool(MLPmb_out["shuffle"])
+    MLPmb_out["verbose"] = bool(MLPmb_out["verbose"])
+    MLPmb_out["warm_start"] = bool(MLPmb_out["warm_start"])
+    MLPmb_out["nesterovs_momentum"] = bool(MLPmb_out["nesterovs_momentum"])
+    MLPmb_out["early_stopping"] = bool(MLPmb_out["early_stopping"])
+    
+    if len(WARNINGS) == 0:
+        print("[MLP] VALIDATED_INPUTS: ", jsonDumps(MLPmb_out, indent=2))
+        try:
+            processResultDict = MLP_MODEL_BUILD_PROCESS(
+                MlpMB_ValidatedInputs=MLPmb_out, 
                 trainFilePath=trainEntryVar.get(),
                 testFilePath=testEntryVar.get()
             )

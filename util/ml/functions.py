@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import gc as hp_optim_gc
+from itertools import product
 import optuna
 from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
 from sklearn.model_selection._search import BaseSearchCV
@@ -10,6 +11,7 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import cross_val_score
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, matthews_corrcoef, cohen_kappa_score, roc_auc_score
@@ -910,6 +912,169 @@ def GB_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
     else:
         raise Exception(f"Unknown Method for HP_OPTIMIZATION: {PROCESS_PARAMS['METHOD']}")
 
+def MLP_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_PATH: str, IN_PROGRESS: InProgressWindow):
+    print(f'[MLP_HYPERPARAMS_OPTIMIZE_PROCESS]:\n{jsonDumps(HP_OPTIM_INPUTS, indent=5)}')
+
+    # PROCESS_PARAMS stores the FEATURES, METHOD, SCORING, CV
+    PROCESS_PARAMS = {k:v for k,v in HP_OPTIM_INPUTS.items() if k in PARAM_GRID_KEYS_NOT_FOR_HP_OPTIM}
+    trainDF = pd.read_excel(TRAIN_FILE_PATH)
+    columnsToSelect = PROCESS_PARAMS['FEATURES']
+    x_train = trainDF.loc[:, columnsToSelect]
+    y_train = trainDF.iloc[:, -1]
+    scaler = StandardScaler()
+    x_train_scaled = scaler.fit_transform(x_train)
+
+    # GRID_SEARCH
+    if PROCESS_PARAMS['METHOD']=='GridSearchCV':
+        mlp_estimator = MLPClassifier(max_iter=1000, random_state=None, verbose=True)
+        _PARAM_GRID = {}
+        for k,v in HP_OPTIM_INPUTS.items():
+            if k in PARAM_GRID_KEYS_NOT_FOR_HP_OPTIM:
+                continue
+            _PARAM_GRID[k] = _MAP_PARAMRANGE_TO_ACTUAL_LISTOFVALUES(v) if type(v)==dict else v
+
+        print('sss:',_PARAM_GRID)
+        
+        # FIND all HIDDEN_LAYER_COMBINATIONS
+        values = _PARAM_GRID['hidden_layer_size']
+        n_values = _PARAM_GRID['num_of_hidden_layers']
+
+        del[_PARAM_GRID['hidden_layer_size']]
+        del[_PARAM_GRID['num_of_hidden_layers']]
+
+        _PARAM_GRID['hidden_layer_sizes'] = [tuple(combo) for n in n_values for combo in product(values, repeat=n)]
+        _PARAM_GRID['alpha'] = list(map(float, _PARAM_GRID['alpha']))
+
+        print('PARAM_GRID: ', _PARAM_GRID)
+
+        HP_OPTIM_METHOD_INSTANCE = GridSearchCV(
+            estimator=mlp_estimator, param_grid=_PARAM_GRID, 
+            scoring=PROCESS_PARAMS['SCORING'], cv=PROCESS_PARAMS['CROSS_FOLD_VALID'], 
+            verbose=3, n_jobs=-1
+        )
+        HP_OPTIM_METHOD_INSTANCE.fit(x_train_scaled, y_train) # NOT SCALED !!
+
+        xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
+        CHECK_DIR('output')
+        xls_out.to_excel(
+            excel_writer=os.path.join('output', f"MLP_GS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
+            index=False
+        )
+        results = HP_OPTIM_METHOD_INSTANCE.best_params_
+        print('FINISHED MLP_HP_OPTIM_PROCESS !!')
+
+        # [CLEAN-UP after parallel processing]  
+        # UserWarning: resource_tracker: There appear to be 10 leaked semlock objects to clean up at shutdown
+        del HP_OPTIM_METHOD_INSTANCE
+        hp_optim_gc.collect()
+        return results
+
+    elif PROCESS_PARAMS['METHOD']=='RandomizedSearchCV':
+        mlp_estimator = MLPClassifier(max_iter=1000, random_state=None, verbose=True)
+        _PARAM_GRID = {}
+        for k,v in HP_OPTIM_INPUTS.items():
+            if k in PARAM_GRID_KEYS_NOT_FOR_HP_OPTIM:
+                continue
+            _PARAM_GRID[k] = _MAP_PARAMRANGE_TO_ACTUAL_LISTOFVALUES(v) if type(v)==dict else v
+        
+        # FIND all HIDDEN_LAYER_COMBINATIONS
+        values = _PARAM_GRID['hidden_layer_size']
+        n_values = _PARAM_GRID['num_of_hidden_layers']
+
+        del[_PARAM_GRID['hidden_layer_size']]
+        del[_PARAM_GRID['num_of_hidden_layers']]
+
+        _PARAM_GRID['hidden_layer_sizes'] = [tuple(combo) for n in n_values for combo in product(values, repeat=n)]
+        _PARAM_GRID['alpha'] = list(map(int, _PARAM_GRID['alpha']))
+
+        print('PARAM_GRID: ', _PARAM_GRID)
+
+        HP_OPTIM_METHOD_INSTANCE = RandomizedSearchCV(
+            estimator=mlp_estimator, param_distributions=_PARAM_GRID, 
+            scoring=PROCESS_PARAMS['SCORING'], cv=PROCESS_PARAMS['CROSS_FOLD_VALID'], 
+            verbose=3, n_jobs=-1
+        )
+        HP_OPTIM_METHOD_INSTANCE.fit(x_train_scaled, y_train)
+
+        xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
+        CHECK_DIR('output')
+        xls_out.to_excel(
+            excel_writer=os.path.join('output', f"MLP_RS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
+            index=False
+        )
+        results = HP_OPTIM_METHOD_INSTANCE.best_params_
+        print('FINISHED MLP_HP_OPTIM_PROCESS !!')
+
+        # [CLEAN-UP after parallel processing]  
+        # UserWarning: resource_tracker: There appear to be 10 leaked semlock objects to clean up at shutdown
+        del HP_OPTIM_METHOD_INSTANCE
+        hp_optim_gc.collect()
+        return results
+        
+    elif PROCESS_PARAMS['METHOD']=='Optuna':
+        _PARAM_GRID = {k:v for k,v in HP_OPTIM_INPUTS.items() if k not in PARAM_GRID_KEYS_NOT_FOR_HP_OPTIM}
+        print('PARAM_GRID: ', _PARAM_GRID)
+
+        def MLP_OBJECTIVE (trial:optuna.Trial):
+            hidden_layer_sizes = tuple([
+                trial.suggest_categorical(
+                    f"n_layer_{i}", 
+                    list(range(_PARAM_GRID['hidden_layer_size']['_FROM'], _PARAM_GRID['hidden_layer_size']['_TO'], _PARAM_GRID['hidden_layer_size']['_STEP']))
+                ) 
+                for i in range(trial.suggest_int(
+                    "n_layers", 
+                    _PARAM_GRID['num_of_hidden_layers']['_FROM'],  _PARAM_GRID['num_of_hidden_layers']['_TO']
+                ))
+            ])
+            activation = trial.suggest_categorical(
+                "activation", _PARAM_GRID['activation']
+            )
+            solver = trial.suggest_categorical(
+                "solver", _PARAM_GRID['solver']
+            )
+            alpha = trial.suggest_categorical(
+                "alpha", list(map(float, _PARAM_GRID['alpha']))
+            )
+            learning_rate = trial.suggest_categorical(
+                "learning_rate", _PARAM_GRID['learning_rate']
+            )
+
+            # Create the MLPClassifier with the sampled hyperparameters
+            model = MLPClassifier(hidden_layer_sizes=hidden_layer_sizes,
+                activation=activation,
+                solver=solver,
+                alpha=alpha,
+                learning_rate=learning_rate,
+                max_iter=1000,  # You can adjust the number of iterations
+                random_state=42,
+                verbose=False
+            )
+
+            # Perform cross-validation and return the average score
+            return cross_val_score(
+                estimator=model, X=x_train_scaled, y=y_train, 
+                cv=PROCESS_PARAMS['CROSS_FOLD_VALID'], scoring=PROCESS_PARAMS['SCORING']
+            ).mean()
+        
+        IN_PROGRESS._CREATE_OPTUNA_PROGRESS()
+        mlp_study = optuna.create_study(direction='maximize', study_name='MLP')
+        mlp_study.optimize(
+            func=MLP_OBJECTIVE, n_trials=OPTUNA_TOTAL_TRIALS, callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
+        )
+        IN_PROGRESS._COMPLETE_OPTUNA_PROGRESS()
+        results = mlp_study.best_params
+        print(mlp_study.best_params)
+
+        # Re-build the hidden_layer_sizes param
+        hidden_layer_sizes = []
+        for layer_idx in range(results['n_layers']):
+            hidden_layer_sizes.append(results[f'n_layer_{layer_idx}'])
+            del[results[f'n_layer_{layer_idx}']]
+        del[results['n_layers']]
+        results['hidden_layer_sizes'] = tuple(hidden_layer_sizes)
+        return results
+    else:
+        raise Exception(f"Unknown Method for HP_OPTIMIZATION: {PROCESS_PARAMS['METHOD']}")
 
 #---------MODEL BUILD -----------
 
@@ -994,5 +1159,20 @@ def KNN_MODEL_BUILD_PROCESS (KnnMB_ValidatedInputs: dict, trainFilePath: str, te
         trainFilePath=trainFilePath,
         testFilePath=testFilePath,
         regressorName='KNN'
+    )
+    return results
+
+def MLP_MODEL_BUILD_PROCESS (MlpMB_ValidatedInputs: dict, trainFilePath: str, testFilePath: str):
+    #print(f'[MLP_MODEL_BUILD_PROCESS]:\n{jsonDumps(MlpMB_ValidatedInputs, indent=5)}')
+    FEATURES_LIST = MlpMB_ValidatedInputs["FEATURES"]
+    del[MlpMB_ValidatedInputs['FEATURES']]
+    mlp_regressor = MLPClassifier(**MlpMB_ValidatedInputs)
+
+    results = MODEL_BUILD_GENERATE_RESULTS(
+        regressor=mlp_regressor, 
+        featureList=FEATURES_LIST,
+        trainFilePath=trainFilePath,
+        testFilePath=testFilePath,
+        regressorName='MLP'
     )
     return results

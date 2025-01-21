@@ -10,6 +10,7 @@ ctk.set_appearance_mode(CONFIG_DATA["settings"]["appearence_mode"])
 
 root=ctk.CTk()
 root.title(CONFIG_DATA["app_name"])
+root.resizable(False, False)
 root.focus_force()
 root.grid_columnconfigure(tuple(range(1,8)), weight=1) # 8 columns
 root.grid_rowconfigure(tuple(range(2,11)),weight=1) # Only Side_panel and task_panel will expand
@@ -73,9 +74,14 @@ ALGO_MAP = {
         'algo_model_build_func': KNN_MODEL_BUILD_SUBMIT
     },
     'GB': {
-        'algo_name': 'GradientBoosting', 
+        'algo_name': 'Gradient Boosting', 
         'algo_hp_optim_func': GB_HP_OPTIM_SUBMIT, 
         'algo_model_build_func': GB_MODEL_BUILD_SUBMIT
+    },
+    'MLP': {
+        'algo_name': 'MultiLayer Perceptron', 
+        'algo_hp_optim_func': MLP_HP_OPTIM_SUBMIT, 
+        'algo_model_build_func': MLP_MODEL_BUILD_SUBMIT
     },
 }
 HP_OPTIM_SELECTED_ALGORITHM = ctk.StringVar()
@@ -484,6 +490,80 @@ GB_hp_optim_panel = HyperParamOptim_AlgoLabelFrame(
     hyperParamsFrame_NumOfCells=1
 )._GET_ALGO_LABELFRAME()
 
+MLP_HP_OPTIM_DATA = DATA['algorithm_properties']['MLP']['hp_optim']
+MLP_HP_OPTIM_DATA_AND_VARS = {
+    'method_opts': MLP_HP_OPTIM_DATA['method']['opts'],
+    'method_selected_optVar': ctk.StringVar(value=MLP_HP_OPTIM_DATA['method']['opts'][0]),
+    'scoring_opts': MLP_HP_OPTIM_DATA['scoring']['opts'],
+    'scoring_selected_optVar': ctk.StringVar(value=MLP_HP_OPTIM_DATA['scoring']['opts'][0]),
+    'cvfolds_entryVar': ctk.IntVar(value=MLP_HP_OPTIM_DATA['cvfolds']['default']),
+    'cvfolds_min': MLP_HP_OPTIM_DATA['cvfolds']['min'],
+    'cvfolds_max': MLP_HP_OPTIM_DATA['cvfolds']['max'],
+
+    'hp_optim_field_configs': {
+        'hidden_layer_size': {
+            'type': MyStepRangeEntryField(
+                from_var=ctk.IntVar(value=MLP_HP_OPTIM_DATA['hidden_layer_size']['default_from']),
+                to_var=ctk.IntVar(value=MLP_HP_OPTIM_DATA['hidden_layer_size']['default_to']),
+                step_var=ctk.IntVar(value=MLP_HP_OPTIM_DATA['hidden_layer_size']['default_max_steps']),
+                min_val=MLP_HP_OPTIM_DATA['hidden_layer_size']['min_val'],
+                max_val=MLP_HP_OPTIM_DATA['hidden_layer_size']['max_val'],
+                max_steps=MLP_HP_OPTIM_DATA['hidden_layer_size']['max_steps']
+            ),
+            'grid': {'row':0,'col':0,'colspan':1}
+        },
+        'num_of_hidden_layers': {
+            'type': MyRangeEntryField(
+                from_var=ctk.IntVar(value=MLP_HP_OPTIM_DATA['num_of_hidden_layers']['default_from']),
+                to_var=ctk.IntVar(value=MLP_HP_OPTIM_DATA['num_of_hidden_layers']['default_to']),
+                min_val=MLP_HP_OPTIM_DATA['num_of_hidden_layers']['min_val'],
+                max_val=MLP_HP_OPTIM_DATA['num_of_hidden_layers']['max_val'],
+            ),
+            'grid': {'row':0,'col':1,'colspan':1}
+        },
+        'activation': {
+            'type': MultiSelectEntryField(
+                options=MLP_HP_OPTIM_DATA['activation']['options'],
+                selected_opt_var=ctk.StringVar(value=','.join(MLP_HP_OPTIM_DATA['activation']['options']))
+            ),
+            'grid': {'row':1,'col':0,'colspan':1}
+        },
+        'solver': {
+            'type': MultiSelectEntryField(
+                options=MLP_HP_OPTIM_DATA['solver']['options'],
+                selected_opt_var=ctk.StringVar(value=','.join(MLP_HP_OPTIM_DATA['solver']['options']))
+            ),
+            'grid': {'row':1,'col':1,'colspan':1}
+        },
+        'alpha': {
+            'type': MultiSelectEntryField(
+                options=MLP_HP_OPTIM_DATA['alpha']['options'],
+                selected_opt_var=ctk.StringVar(value=','.join(MLP_HP_OPTIM_DATA['alpha']['options']))
+            ),
+            'grid': {'row':2,'col':0,'colspan':1}
+        },
+        'learning_rate': {
+            'type': MultiSelectEntryField(
+                options=MLP_HP_OPTIM_DATA['learning_rate']['options'],
+                selected_opt_var=ctk.StringVar(value=','.join(MLP_HP_OPTIM_DATA['learning_rate']['options']))
+            ),
+            'grid': {'row':2,'col':1,'colspan':1}
+        },
+    }
+}
+MLP_hp_optim_panel = HyperParamOptim_AlgoLabelFrame(
+    master_panel=hyperparam_optim_panel,
+    algoValueInMap=ALGO_MAP['MLP'],
+    algo_hp_optim_fields_data=MLP_HP_OPTIM_DATA_AND_VARS,
+    my_font=MY_FONT_1,
+    fg_color=COLORS['SKYBLUE_FG'],
+    result_Loading_ImgPath=HP_OPTIMIZATION_ONGOING_IMG_PATH,
+    trainVar=TRAIN_FILE_PATH,
+    testVar=TEST_FILE_PATH,
+    SELECTED_FEATURES=SELECTED_FEATURES,
+
+    hyperParamsFrame_NumOfCells=2
+)._GET_ALGO_LABELFRAME()
 
 # MODEL_BUILD ------------------------------------------------------------------------------------------
 def CREATE_DATA_AND_VARS_MAP_FOR_MODEL_BUILD (DATA:dict, numOfFieldsPerRow: int = 4):
@@ -623,6 +703,23 @@ GB_model_build_panel = ModelBuild_AlgoLabelFrame(
     hyperParamsFrame_NumOfCells=4
 )._GET_ALGO_LABELFRAME()
 
+#MLP
+MLP_MODEL_BUILD_DATA = DATA['algorithm_properties']['MLP']['model_build']
+MLP_MODEL_BUILD_DATA_AND_VARS = CREATE_DATA_AND_VARS_MAP_FOR_MODEL_BUILD(MLP_MODEL_BUILD_DATA, numOfFieldsPerRow=4)
+
+MLP_model_build_panel = ModelBuild_AlgoLabelFrame(
+    master_panel=model_build_panel,
+    algoValueInMap=ALGO_MAP['MLP'],
+    algo_model_build_fields_data=MLP_MODEL_BUILD_DATA_AND_VARS,
+    my_font=MY_FONT_1,
+    fg_color=COLORS['SKYBLUE_FG'],
+    result_Loading_ImgPath=RESULTS_LOADING_IMG_PATH,
+    SELECTED_FEATURES=SELECTED_FEATURES,
+    trainVar=TRAIN_FILE_PATH,
+    testVar=TEST_FILE_PATH,
+    hyperParamsFrame_NumOfCells=4
+)._GET_ALGO_LABELFRAME()
+
 #----------------
 
 ALGO_LB_FRAMES = {
@@ -632,7 +729,8 @@ ALGO_LB_FRAMES = {
         'LDA': LDA_hp_optim_panel,
         'LR': LR_hp_optim_panel,
         'KNN': KNN_hp_optim_panel,
-        'GB': GB_hp_optim_panel
+        'GB': GB_hp_optim_panel,
+        'MLP': MLP_hp_optim_panel,
     },
     'model_build': {
         'RF': RF_model_build_panel,
@@ -640,7 +738,8 @@ ALGO_LB_FRAMES = {
         'LDA': LDA_model_build_panel,
         'LR': LR_model_build_panel,
         'KNN': KNN_model_build_panel,
-        'GB': GB_model_build_panel
+        'GB': GB_model_build_panel,
+        'MLP': MLP_model_build_panel
     }
 }
 ALGO_NAME_TO_KEY_MAP = { v['algo_name']:k for (k,v) in ALGO_MAP.items() }
@@ -670,7 +769,6 @@ showAlgoLabelFrame_ForOption_InTaskPanel(ALGO_LB_FRAMES['hp_optim'], 'RF')
 
 MODEL_BUILD_SELECTED_ALGORITHM.set(ALGO_MAP['RF']['algo_name'])
 showAlgoLabelFrame_ForOption_InTaskPanel(ALGO_LB_FRAMES['model_build'], 'RF')
-
 
 root.mainloop()
 

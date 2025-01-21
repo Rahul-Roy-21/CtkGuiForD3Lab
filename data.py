@@ -1,11 +1,11 @@
 _COMMON_PROPS = {
     'hp_optim': {
         'method_opts_without_Optuna': ['GridSearchCV','RandomizedSearchCV'],
-        'method_opts_with_Optuna': ['GridSearchCV','RandomizedSearchCV','Optuna'],
+        'method_opts_with_Optuna': ['Optuna', 'GridSearchCV','RandomizedSearchCV'],
         'scoring_opts': [
             'accuracy', 'balanced_accuracy','average_precision','f1','f1_micro', 'f1_macro', 'f1_weighted','precision', 'recall', 'jaccard','roc_auc', 'roc_auc_ovr','roc_auc_ovo', 'roc_auc_ovr_weighted','roc_auc_ovo_weighted'
         ],
-        'optuna_total_trials' : 100,
+        'optuna_total_trials' : 20,
     }
 }
 
@@ -16,9 +16,9 @@ DATA = {
     },
     "fonts": {
         "my_font_1": {
-            "family":  "Baghdad",
+            "family":  "freemono",
             "size": 12,
-            "weight": "normal"
+            "weight": "bold"
         }
     },
     "colors": {
@@ -235,7 +235,71 @@ DATA = {
                 'n_iter_no_change': {'default_val':None},
                 'tol': { 'default_val':1e-4 },
             }
-        }
+        },
+        'MLP': {
+            'hp_optim': {
+                'method': {
+                    'opts': _COMMON_PROPS['hp_optim']['method_opts_with_Optuna']
+                },
+                'scoring': {
+                    'opts': _COMMON_PROPS['hp_optim']['scoring_opts']
+                },
+                'cvfolds': {'min': 2, 'max': 20, 'default': 2 },
+                'hidden_layer_size': {
+                    'min_val': 50, 'max_val':300, 'max_steps': 50, 'default_from': 64, 'default_to': 65, 'default_max_steps': 1
+                },
+                'num_of_hidden_layers': {
+                    'min_val': 2, 'max_val':10, 'default_from': 2, 'default_to':4
+                },
+                'activation': {
+                    'options': ['identity', 'logistic', 'tanh', 'relu'], 
+                    'min_num_of_choices': 2
+                },
+                'solver': {
+                    'options': ['lbfgs', 'sgd', 'adam'], 
+                    'min_num_of_choices': 2
+                },
+                'alpha': {
+                    'options':[f'{10**x}' for x in range(-4,1)],
+                    'min_num_of_choices': 2
+                },
+                'learning_rate': {
+                    'options': ['constant', 'invscaling', 'adaptive'], 
+                    'min_num_of_choices': 2
+                },
+            },
+            'model_build': {
+                'hidden_layer_sizes': {'default_val':'(100,)'},
+                'activation': {
+                    'default_idx':3, 
+                    'options': ['identity', 'logistic', 'tanh', 'relu']
+                },
+                'solver': {
+                    'default_idx':2, 
+                    'options': ['lbfgs', 'sgd', 'adam']
+                },
+                'alpha': {'default_val': 0.0001},
+                'batch_size': {'default_val': 'auto'},
+                'learning_rate': {
+                    'default_idx':0, 
+                    'options': ['constant', 'invscaling', 'adaptive']
+                },
+                'learning_rate_init': {'default_val': 0.001},
+                'power_t': {'default_val': 0.5},
+                'max_iter': {'default_val': 200},
+                'shuffle': {'default_idx':0, 'options': ['True', 'False']},
+                'random_state': {'default_val':None},
+                'tol': {'default_val': 1e-4},
+                'verbose': {'default_idx':1, 'options': ['True', 'False']},
+                'warm_start': {'default_idx':1, 'options': ['True', 'False']},
+                'momentum': {'default_val': 0.9},
+                'nesterovs_momentum': {'default_idx':0, 'options': ['True', 'False']},
+                'early_stopping': {'default_idx':1, 'options': ['True', 'False']},
+                'validation_fraction': {'default_val': 0.1},
+                'n_iter_no_change': {'default_val': 10},
+                'max_fun': {'default_val': 15000}
+            }
+        },
     },
 
     'plot_properties' : {
@@ -249,12 +313,12 @@ DATA = {
         'TITLE' : {
             'FONT_SIZE': 23,
             'FONT_WEIGHT': "bold",
-            'FONT_STYLE' : "courier prime"
+            'FONT_STYLE' : "baghdad"
         },
         'RC_PARAMS': {
             'FONT_SIZE': 12,
             'FONT_WEIGHT': "bold",
-            'FONT_STYLE' : "courier prime"
+            'FONT_STYLE' : "freemono"
         }
     }
 }
