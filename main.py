@@ -10,7 +10,7 @@ ctk.set_appearance_mode(CONFIG_DATA["settings"]["appearence_mode"])
 
 root=ctk.CTk()
 root.title(CONFIG_DATA["app_name"])
-root.resizable(False, False)
+#root.resizable(False, False)
 root.focus_force()
 root.grid_columnconfigure(tuple(range(1,8)), weight=1) # 8 columns
 root.grid_rowconfigure(tuple(range(2,11)),weight=1) # Only Side_panel and task_panel will expand

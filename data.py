@@ -313,12 +313,12 @@ DATA = {
         'TITLE' : {
             'FONT_SIZE': 23,
             'FONT_WEIGHT': "bold",
-            'FONT_STYLE' : "baghdad"
+            'FONT_STYLE' : "Times New Roman"
         },
         'RC_PARAMS': {
             'FONT_SIZE': 12,
             'FONT_WEIGHT': "bold",
-            'FONT_STYLE' : "freemono"
+            'FONT_STYLE' : "FreeMono"
         }
     }
 }
