@@ -1,7 +1,8 @@
 import customtkinter as ctk
 from PIL import Image
 from tkinter import filedialog
-from util.ml.functions import CHECK_XLS_FILES
+import json
+from util.ml.functions import CHECK_XLS_FILES, GET_RANKED_FEATURES
 from util.gui.widgets import CustomWarningBox, FeatureSelectEntry
 
 class TaskPanel:
@@ -235,17 +236,20 @@ class DataSetPanel:
         if not self.train_entryVar.get() or not self.test_entryVar.get():
             return
         valid, loaded_columns = CHECK_XLS_FILES(self.train_entryVar.get(), self.test_entryVar.get())
-        if valid:
-            self.ALL_LOADED_FEATURES.set(",".join(loaded_columns))
-            self.SELECTED_FEATURES.set(self.ALL_LOADED_FEATURES.get())
-        else:
+        if not valid:
             self.ALL_LOADED_FEATURES.set("")
             self.SELECTED_FEATURES.set("")
             CustomWarningBox(
-                parent=self.master, 
-                warnings=["Train and Test files do not have identical column sets."], 
-                my_font=self.my_font
+                parent=self.master, my_font=self.my_font, 
+                warnings=["Train and Test files do not have identical column sets."]
             )
+            return
+        
+        ranked_features_dict = GET_RANKED_FEATURES(self.train_entryVar.get())
+        self.ALL_LOADED_FEATURES.set(json.dumps(ranked_features_dict))
+        
+        selected_features = [v['Feature'] for k,v in ranked_features_dict.items() if 1<=k<=10]
+        self.SELECTED_FEATURES.set(",".join(selected_features))
 
 class FeatureAndAlgorithmFrame:
     def __init__(self, masterFrame: ctk.CTkFrame, my_font: ctk.CTkFont, colors: dict, 

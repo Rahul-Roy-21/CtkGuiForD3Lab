@@ -12,7 +12,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.neural_network import MLPClassifier
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import cross_val_score
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, matthews_corrcoef, cohen_kappa_score, roc_auc_score
 from sklearn.metrics import confusion_matrix, classification_report, RocCurveDisplay, roc_curve
@@ -76,6 +76,57 @@ def CHECK_XLS_FILES(train_file_path: str, test_file_path: str):
 
     if len(warnings):
         return False, []
+
+def GET_RANKED_FEATURES(train_file_path: str):
+    """
+    Given a Train file, it returns a dictionary where:
+    - key : Rank of the Feature
+    - value : Dictionary having FeatureName and Absolute_difference
+
+    Returns {
+        1: {'Feature':f1, 'Absolute_Diff':0.322}, 
+        2: {'Feature':f2, 'Absolute_Diff':0.31}, 
+        ...
+    }
+    """
+    df = pd.read_excel(train_file_path)
+    
+    # Identify the last column (assumed to be the binary classification column)
+    binary_column = df.columns[-1]
+
+    # Normalize descriptor values between 0 and 1 (excluding the last column)
+    scaler = MinMaxScaler()
+    descriptors = df.iloc[:, 1:-1]  # All columns except the last one
+    descriptors_normalized = scaler.fit_transform(descriptors)
+    df_normalized = pd.DataFrame(descriptors_normalized, columns=descriptors.columns)
+
+    # Include the last column ('Binary') back in the final dataframe
+    df_normalized[binary_column] = df[binary_column]
+
+    # Partition the compounds into active and inactive groups
+    active_compounds = df_normalized[df_normalized[binary_column] == 1]
+    inactive_compounds = df_normalized[df_normalized[binary_column] == 0]
+
+    # Compute mean values of each descriptor for each group
+    mean_active = active_compounds.mean()
+    mean_inactive = inactive_compounds.mean()
+
+    # Calculate absolute differences between mean values for each descriptor
+    mean_diff = abs(mean_active - mean_inactive)
+
+    # Remove the last column from the results (as it’s not a descriptor)
+    mean_diff = mean_diff.drop(binary_column, errors='ignore')
+
+    # Rank the descriptors based on absolute difference
+    mean_diff_sorted = mean_diff.sort_values(ascending=False)
+    ranking = pd.DataFrame(
+        {'Feature': mean_diff_sorted.index, 'Absolute_Diff': mean_diff_sorted.values}
+    )
+    ranking['Rank'] = range(1, len(ranking) + 1)
+
+    ranked_features_dict = ranking.set_index('Rank').to_dict(orient='index')
+    print('ranked_features_dict: ', ranked_features_dict)
+    return ranked_features_dict
 
 def HP_OPTIM_GENERATE_RESULTS (hp_optim_methodInstance: BaseSearchCV, hp_optim_method_name: str, scoring: str, featureList: list, trainFilePath: str) -> dict:
     trainDF = pd.read_excel(trainFilePath)

@@ -1,6 +1,7 @@
 from customtkinter import *
 from PIL import Image, ImageSequence
 from os import path as os_path
+import json
 from data import DATA, _COMMON_PROPS
 import optuna
 
@@ -46,17 +47,15 @@ class FeatureSelectEntry(CTkFrame):
             CustomWarningBox(self, ["Please select both Train and Test files first."], self.my_font)
             return
         
-        from util.ml.functions import CHECK_XLS_FILES
-        valid, columns = CHECK_XLS_FILES(self.trainPathVar.get(), self.testPathVar.get())
-        if not valid:
-            self.allOptionsVar.set("")
-            self.selectedOptions_var.set("")
-            CustomWarningBox(self, ["Train and Test files do not have identical column sets."], self.my_font)
-        else:
-            try:
-                MultiSelectDialog(self, "Features", list(self.allOptionsVar.get().split(',')), self.selectedOptions_var, self.my_font, self.MIN_CHOOSE)
-            except Exception as ex:
-                CustomWarningBox(self, [ex], self.my_font)
+        try:
+            RankedFeaturesSelectDialog(
+                parent=self, 
+                loaded_ranked_features=json.loads(self.allOptionsVar.get()),
+                selected_features_var=self.selectedOptions_var,
+                my_font=self.my_font 
+            )
+        except Exception as ex:
+            CustomWarningBox(self, [ex], self.my_font)
 
 class MultiSelectEntry(CTkFrame):
     def __init__(self, parent:CTkFrame, whatToChoosePlural:str, my_font:CTkFont, tkVar:StringVar, options:list[str], MIN_CHOOSE:int=2):
@@ -414,6 +413,190 @@ class MyStepRangeEntry1(CTkFrame):
 
         if to_value == from_value:
             self.from_var.set(to_value-1)
+
+class RankedFeaturesSelectDialog(CTkToplevel):
+    def __init__(self, parent:CTkFrame, 
+            loaded_ranked_features :dict[int:dict], selected_features_var: StringVar, 
+            my_font:CTkFont, MIN_CHOOSE: int = 2
+        ):
+        super().__init__(parent)
+        self.title('Features Selection')
+        self.geometry("500x500")
+        #self.resizable(False, False)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        self.configure(fg_color=COLORS['SKYBLUE_FG'])
+        self.ranked_features_dict = loaded_ranked_features
+        self.selected_features_var = selected_features_var
+        self.selected_features = selected_features_var.get().split(',')
+        self.my_font = my_font
+        self.MIN_CHOOSE=MIN_CHOOSE
+
+        self.control_frame = CTkFrame(self, fg_color=COLORS['SKYBLUE_FG'])
+        self.control_frame.grid(row=0, column=0, padx=5, pady=5, sticky=NSEW)
+        self.control_frame.grid_columnconfigure((0,1), weight=1)
+
+        # Select Top X
+        self.top_x_entry = CTkEntry(
+            master=self.control_frame, 
+            placeholder_text="Num. of Top Columns to select (X)",
+            font=my_font, border_width=0, justify=CENTER,
+            fg_color="white", text_color="black", corner_radius=0
+        )
+        self.top_x_entry.grid(row=0, column=0, padx=5, pady=5, sticky=NSEW)
+        self.top_x_button = CTkButton(
+            master=self.control_frame, 
+            text="Select Top X", 
+            font=my_font,
+            fg_color=COLORS['MEDIUMGREEN_FG'],
+            hover_color=COLORS['MEDIUMGREEN_HOVER_FG'],
+            text_color='white',
+            corner_radius=0,
+            width=100,
+            border_spacing=0,
+            command=self.select_top_x
+        )
+        self.top_x_button.grid(row=0, column=1, padx=5, pady=5, sticky=NSEW)
+
+        # Select by Threshold
+        self.threshold_entry = CTkEntry(
+            self.control_frame, 
+            placeholder_text="Threshold for Abs.Diff",
+            font=my_font, border_width=0, justify=CENTER,
+            fg_color="white", text_color="black", corner_radius=0
+        )
+        self.threshold_entry.grid(row=1, column=0, padx=5, pady=5, sticky=NSEW)
+        self.threshold_button = CTkButton(
+            master=self.control_frame, 
+            text="Select Above Threshold",
+            font=my_font,
+            fg_color=COLORS['MEDIUMGREEN_FG'],
+            hover_color=COLORS['MEDIUMGREEN_HOVER_FG'],
+            text_color='white',
+            corner_radius=0,
+            width=100,
+            border_spacing=0,
+            command=self.select_above_threshold
+        )
+        self.threshold_button.grid(row=1, column=1, padx=5, pady=5, sticky=NSEW)
+
+        # Scrollable Frame for the table
+        self.scrollable_frame = CTkScrollableFrame(self, width=450, height=300, fg_color=COLORS['SKYBLUE_FG'])
+        self.scrollable_frame.grid(row=1, column=0, padx=5, pady=5, sticky=NSEW)
+
+        self.headers = {"Rank":1, "Feature":4, "Absolute_Difference":4}
+        self.scrollable_frame.grid_columnconfigure(tuple(range(sum(self.headers.values()))), weight=1)
+        # Populate Student Table
+        self.populate_table()
+
+        # Submit Button
+        self.submit_btn = CTkButton(
+            master=self, 
+            text="Submit",
+            font=my_font,
+            fg_color=COLORS['MEDIUMGREEN_FG'],
+            hover_color=COLORS['MEDIUMGREEN_HOVER_FG'],
+            text_color='white',
+            corner_radius=0,
+            width=200,
+            border_spacing=0,
+            command=self.submit_selection
+        )
+        self.submit_btn.grid(row=2, column=0, padx=5, pady=10)
+
+    def populate_table(self):
+        """Populate the scrollable table with feature data."""
+        # Clear frame before repopulating
+        for widget in self.scrollable_frame.winfo_children():
+            widget.destroy()
+
+        # Create Table Headers
+        col=0
+        for header in self.headers.keys():
+            label = CTkLabel(
+                self.scrollable_frame, text=header, font=self.my_font, text_color='white',
+                fg_color=COLORS['LIGHTRED_FG']
+            )
+            label.grid(row=0, column=col, columnspan=self.headers[header], padx=2, pady=2, sticky=NSEW)
+            col+=self.headers[header]
+
+        for row, (rank, details) in enumerate(self.ranked_features_dict.items(), start=1):
+            name = details["Feature"]
+            score = details["Absolute_Diff"]
+            bg_color = "lightgreen" if name in self.selected_features else "transparent"
+
+            # Clickable Labels
+            rank_label = CTkLabel(
+                self.scrollable_frame, text=str(rank), fg_color=bg_color, font=self.my_font
+            )
+            feature_label = CTkLabel(
+                self.scrollable_frame, text=name, fg_color=bg_color, font=self.my_font
+            )
+            abs_diff_label = CTkLabel(
+                self.scrollable_frame, text=str(score), fg_color=bg_color, font=self.my_font
+            )
+            
+            col=0
+            rank_label.grid(
+                row=row, column=col, columnspan=self.headers['Rank'], 
+                padx=2, pady=2, sticky=NSEW
+            )
+            col+=self.headers['Rank']
+            feature_label.grid(
+                row=row, column=col, columnspan=self.headers['Feature'], 
+                padx=2, pady=2, sticky=NSEW
+            )
+            col+=self.headers["Feature"]
+            abs_diff_label.grid(
+                row=row, column=col, columnspan=self.headers['Absolute_Difference'], 
+                padx=2, pady=2, sticky=NSEW
+            )
+
+            # Add click event to toggle selection
+            # rank_label.bind("<Button-1>", lambda event, n=name: self.toggle_selection(n))
+            # feature_label.bind("<Button-1>", lambda event, n=name: self.toggle_selection(n))
+            # abs_diff_label.bind("<Button-1>", lambda event, n=name: self.toggle_selection(n))
+
+    def toggle_selection(self, name):
+        """Toggle selection of a feature."""
+        if name in self.selected_features and len(self.selected_features)>self.MIN_CHOOSE:
+            self.selected_features.remove(name)
+        else:
+            self.selected_features.append(name)
+        self.populate_table()  # Refresh table with new selections
+
+    def select_top_x(self):
+        """Select the top X features."""
+        try:
+            x = int(self.top_x_entry.get())
+            if x <= self.MIN_CHOOSE or x > len(self.ranked_features_dict):
+                return
+            self.selected_features = {
+                v['Feature'] for k,v in self.ranked_features_dict.items() if 1<=int(k)<=x
+            }
+            self.populate_table()
+        except ValueError:
+            pass  # Ignore invalid input
+
+    def select_above_threshold(self):
+        """Select features above the given threshold."""
+        try:
+            threshold = float(self.threshold_entry.get())
+            to_be_selected_features = {
+                v['Feature'] for k,v in self.ranked_features_dict.items() 
+                if float(v['Absolute_Diff'])>float(threshold)
+            }
+            if len(to_be_selected_features)<self.MIN_CHOOSE:
+                return
+            self.selected_features = to_be_selected_features
+            self.populate_table()
+        except ValueError:
+            pass  # Ignore invalid input
+
+    def submit_selection(self):
+        """Update selected list in the main window and close TopLevel."""
+        self.selected_features_var.set(",".join(self.selected_features))
+        self.destroy()  # Close the TopLevel
 
 class MultiSelectDialog(CTkToplevel):
     def __init__(self, parent:CTkFrame, 
