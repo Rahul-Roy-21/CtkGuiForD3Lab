@@ -39,6 +39,9 @@ HP_OPTIM_IMG = {
 MODEL_BUILD_IMG = {
     'PATH': os.path.join('images', 'model_build.png'), 'SIZE': (40,40)
 }
+SETTINGS_IMG = {
+    'PATH': os.path.join('images', 'settings.png'), 'SIZE': (30,30)
+}
 
 
 # GLOBAL VARIABLES
@@ -116,12 +119,14 @@ side_panel = SidePanel(
         'fg': COLORS['SKYBLUE_FG'], 
         'btns': {
             'hp_optim': {'fg': COLORS['LIGHTRED_FG'], 'hover': COLORS['LIGHTRED_HOVER_FG']}, 
-            'model_build': { 'fg': COLORS['MEDIUMGREEN_FG'], 'hover': COLORS['MEDIUMGREEN_HOVER_FG']}
+            'model_build': { 'fg': COLORS['MEDIUMGREEN_FG'], 'hover': COLORS['MEDIUMGREEN_HOVER_FG']},
+            'settings': { 'fg': '#728FCE', 'hover': '#86A3E2'}
         }
     },
     img_pathsAndSizes={
         'hp_optim': {'path': HP_OPTIM_IMG['PATH'], 'size': HP_OPTIM_IMG['SIZE']}, 
-        'model_build': {'path': MODEL_BUILD_IMG['PATH'], 'size': MODEL_BUILD_IMG['SIZE']}
+        'model_build': {'path': MODEL_BUILD_IMG['PATH'], 'size': MODEL_BUILD_IMG['SIZE']},
+        'settings': {'path': SETTINGS_IMG['PATH'], 'size': SETTINGS_IMG['SIZE']},
     }
 )
 

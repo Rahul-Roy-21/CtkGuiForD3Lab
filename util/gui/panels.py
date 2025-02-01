@@ -4,6 +4,7 @@ from tkinter import filedialog
 import json
 from util.ml.functions import CHECK_XLS_FILES, GET_RANKED_FEATURES
 from util.gui.widgets import CustomWarningBox, FeatureSelectEntry
+from data import _COMMON_PROPS
 
 class TaskPanel:
     def __init__(self,master:ctk.CTk, my_font:ctk.CTkFont, 
@@ -86,6 +87,10 @@ class SidePanel:
             light_image=Image.open(self.img_pathsAndSizes['model_build']['path']), 
             size=self.img_pathsAndSizes['model_build']['size']
         )
+        settings_img = ctk.CTkImage(
+            light_image=Image.open(self.img_pathsAndSizes['settings']['path']), 
+            size=self.img_pathsAndSizes['settings']['size']
+        )
 
         hyperparam_optim_btn = self.create_panelSelectionButton (
             btn_text="HYPERPARAMETER\nOPTIMIZATION", 
@@ -97,8 +102,15 @@ class SidePanel:
             btn_image=model_build_img,
             BTN_COLORS=self.colors['btns']['model_build']
         )
+        settings_btn = self.create_panelSelectionButton (
+            btn_text="SETTINGS", 
+            btn_image=settings_img,
+            BTN_COLORS=self.colors['btns']['settings']
+        )
+    
         hyperparam_optim_btn.grid(row=0,column=0,rowspan=3,sticky=ctk.NSEW, padx=10,pady=5)
         model_build_btn.grid(row=3,column=0,rowspan=3,sticky=ctk.NSEW, padx=10,pady=5)
+        settings_btn.grid(row=6,column=0,rowspan=3,sticky=ctk.NSEW, padx=10,pady=5)
 
         return {'hp_optim': hyperparam_optim_btn, 'model_build': model_build_btn}
     
@@ -245,10 +257,14 @@ class DataSetPanel:
             )
             return
         
-        ranked_features_dict = GET_RANKED_FEATURES(self.train_entryVar.get())
-        self.ALL_LOADED_FEATURES.set(json.dumps(ranked_features_dict))
+        ranked_features_dicts = GET_RANKED_FEATURES(self.train_entryVar.get())
+        self.ALL_LOADED_FEATURES.set(json.dumps(ranked_features_dicts))
         
-        selected_features = [v['Feature'] for k,v in ranked_features_dict.items() if 1<=k<=10]
+        MIN_COUNT_OF_FEATURES_TO_SELECT = int(_COMMON_PROPS['feature_selection']['min_features_selected'])
+        selected_features = [
+            rec['Feature'] for rec in ranked_features_dicts 
+            if rec['Rank']<=MIN_COUNT_OF_FEATURES_TO_SELECT
+        ]
         self.SELECTED_FEATURES.set(",".join(selected_features))
 
 class FeatureAndAlgorithmFrame:

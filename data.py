@@ -1,4 +1,8 @@
 _COMMON_PROPS = {
+    'feature_selection': {
+        'ranking_method': 'MDF', # MDF or MIS allowed
+        'min_features_selected': 5,
+    },
     'hp_optim': {
         'method_opts_without_Optuna': ['GridSearchCV','RandomizedSearchCV'],
         'method_opts_with_Optuna': ['Optuna', 'GridSearchCV','RandomizedSearchCV'],
@@ -16,9 +20,9 @@ DATA = {
     },
     "fonts": {
         "my_font_1": {
-            "family":  "freemono",
+            "family":  "Minimalust",
             "size": 12,
-            "weight": "bold"
+            "weight": "normal"
         }
     },
     "colors": {
@@ -26,8 +30,8 @@ DATA = {
         "MEDIUMGREEN_HOVER_FG": "#319941",
         "LIGHTRED_FG": "#c94259",
         "LIGHTRED_HOVER_FG": "#d9596e",
-        #"SKYBLUE_FG": "#99e6ff",
-        "SKYBLUE_FG": "#e8e3fa",
+        "SKYBLUE_FG": "#E3E4FA",
+        #"SKYBLUE_FG": "#e8e3fa",
         "GREY_HOVER_FG": "#a3a2a3",
         "GREY_FG": "#6b6a6b",
         "LIGHT_YELLOW_FG": "#fff1cc"

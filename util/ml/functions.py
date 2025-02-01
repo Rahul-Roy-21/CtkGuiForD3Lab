@@ -3,6 +3,7 @@ import os
 import gc as hp_optim_gc
 from itertools import product
 import optuna
+from sklearn.feature_selection import mutual_info_classif
 from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
 from sklearn.model_selection._search import BaseSearchCV
 from sklearn.ensemble import RandomForestClassifier
@@ -77,56 +78,92 @@ def CHECK_XLS_FILES(train_file_path: str, test_file_path: str):
     if len(warnings):
         return False, []
 
-def GET_RANKED_FEATURES(train_file_path: str):
+def GET_RANKED_FEATURES(train_file_path: str) -> list[dict]:
     """
-    Given a Train file, it returns a dictionary where:
-    - key : Rank of the Feature
-    - value : Dictionary having FeatureName and Absolute_difference
-
-    Returns {
-        1: {'Feature':f1, 'Absolute_Diff':0.322}, 
-        2: {'Feature':f2, 'Absolute_Diff':0.31}, 
-        ...
-    }
+    Given a Train file, it returns a list of records, where each record is as follows
+    - For MDF [Mean Diff Filtering]: 
+        - {Rank: 1, Feature: f1, MDF: 0.032323}
+    - For MIS [Mutual Information Score]: 
+        - {Rank: 1, Feature: f1, MIS: 0.032323}
     """
+    FEATURE_RANKING_METHOD = _COMMON_PROPS['feature_selection']['ranking_method']
     df = pd.read_excel(train_file_path)
     
-    # Identify the last column (assumed to be the binary classification column)
-    binary_column = df.columns[-1]
+    if FEATURE_RANKING_METHOD=='MDF':
+        # Identify the last column (assumed to be the binary classification column)
+        binary_column = df.columns[-1]
 
-    # Normalize descriptor values between 0 and 1 (excluding the last column)
-    scaler = MinMaxScaler()
-    descriptors = df.iloc[:, 1:-1]  # All columns except the last one
-    descriptors_normalized = scaler.fit_transform(descriptors)
-    df_normalized = pd.DataFrame(descriptors_normalized, columns=descriptors.columns)
+        # Normalize descriptor values between 0 and 1 (excluding the last column)
+        scaler = MinMaxScaler()
+        descriptors = df.iloc[:, 1:-1]  # All columns except the last one
+        descriptors_normalized = scaler.fit_transform(descriptors)
+        df_normalized = pd.DataFrame(descriptors_normalized, columns=descriptors.columns)
 
-    # Include the last column ('Binary') back in the final dataframe
-    df_normalized[binary_column] = df[binary_column]
+        # Include the last column ('Binary') back in the final dataframe
+        df_normalized[binary_column] = df[binary_column]
 
-    # Partition the compounds into active and inactive groups
-    active_compounds = df_normalized[df_normalized[binary_column] == 1]
-    inactive_compounds = df_normalized[df_normalized[binary_column] == 0]
+        # Partition the compounds into active and inactive groups
+        active_compounds = df_normalized[df_normalized[binary_column] == 1]
+        inactive_compounds = df_normalized[df_normalized[binary_column] == 0]
 
-    # Compute mean values of each descriptor for each group
-    mean_active = active_compounds.mean()
-    mean_inactive = inactive_compounds.mean()
+        # Compute mean values of each descriptor for each group
+        mean_active = active_compounds.mean()
+        mean_inactive = inactive_compounds.mean()
 
-    # Calculate absolute differences between mean values for each descriptor
-    mean_diff = abs(mean_active - mean_inactive)
+        # Calculate absolute differences between mean values for each descriptor
+        mean_diff = abs(mean_active - mean_inactive)
 
-    # Remove the last column from the results (as it’s not a descriptor)
-    mean_diff = mean_diff.drop(binary_column, errors='ignore')
+        # Remove the last column from the results (as it’s not a descriptor)
+        mean_diff = mean_diff.drop(binary_column, errors='ignore')
 
-    # Rank the descriptors based on absolute difference
-    mean_diff_sorted = mean_diff.sort_values(ascending=False)
-    ranking = pd.DataFrame(
-        {'Feature': mean_diff_sorted.index, 'Absolute_Diff': mean_diff_sorted.values}
-    )
-    ranking['Rank'] = range(1, len(ranking) + 1)
+        # Rank the descriptors based on absolute difference
+        mean_diff_sorted = mean_diff.sort_values(ascending=False)
+        ranking = pd.DataFrame(
+            {'Feature': mean_diff_sorted.index, 'MDF': mean_diff_sorted.values}
+        )
+        ranking['Rank'] =  ranking["MDF"].rank(ascending=False, method="dense").astype(int)
 
-    ranked_features_dict = ranking.set_index('Rank').to_dict(orient='index')
-    print('ranked_features_dict: ', ranked_features_dict)
-    return ranked_features_dict
+        # Convert Pd Dataframe -> Dict of Records
+        ranked_features_dict = ranking.to_dict(orient='records')
+        print('ranked_features_dict: ', ranked_features_dict)
+
+        # Export in xls
+        CHECK_DIR('output')
+        ranking.set_index('Rank').reset_index().to_excel(
+            excel_writer=os.path.join('output', 'MDF.xlsx'), 
+            index=False
+        )
+
+        return ranked_features_dict
+    
+    elif FEATURE_RANKING_METHOD=='MIS':
+        X = df.iloc[:, 1:-1]  # All descriptor columns (features)
+        y = df.iloc[:, -1]  # Last column (binary labels)
+
+        # Compute mutual information scores
+        mi_scores = mutual_info_classif(X, y, discrete_features=False, random_state=42)
+
+        # Create a DataFrame for results
+        mi_results = pd.DataFrame({"Feature": X.columns,"MIS": mi_scores})
+
+        # Rank the descriptors based on MI score (higher is better)
+        mi_results["Rank"] = mi_results["MIS"].rank(ascending=False, method="dense").astype(int)
+
+        # Sort by Rank Score in descending order
+        mi_results = mi_results.sort_values(by="Rank")
+        
+        ranked_features_dict = mi_results.to_dict('records')
+        print('ranked_features_dict: ', ranked_features_dict)
+
+        # Export in xls
+        CHECK_DIR('output')
+        mi_results.set_index('Rank').reset_index().to_excel(
+            excel_writer=os.path.join('output', 'MIS.xlsx'), 
+            index=False
+        )
+        return ranked_features_dict
+    else:
+        raise Exception(f'Unrecognised Feature Ranking Method: {FEATURE_RANKING_METHOD} !!\nUse MDF or MIS')
 
 def HP_OPTIM_GENERATE_RESULTS (hp_optim_methodInstance: BaseSearchCV, hp_optim_method_name: str, scoring: str, featureList: list, trainFilePath: str) -> dict:
     trainDF = pd.read_excel(trainFilePath)
