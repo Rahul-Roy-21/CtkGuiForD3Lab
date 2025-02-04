@@ -21,7 +21,8 @@ DATA = {
     "fonts": {
         "my_font_1": {
             "family":  "Minimalust",
-            "size": 12,
+            #"family": 'freemono',
+            "size": 13,
             "weight": "normal"
         }
     },
@@ -315,14 +316,18 @@ DATA = {
             'COLOR': 'blue'
         },
         'TITLE' : {
-            'FONT_SIZE': 23,
+            'FONT_SIZE': 21,
             'FONT_WEIGHT': "bold",
-            'FONT_STYLE' : "Times New Roman"
+            'FONT_STYLE' : "Photonico Code"
         },
         'RC_PARAMS': {
             'FONT_SIZE': 12,
             'FONT_WEIGHT': "bold",
             'FONT_STYLE' : "FreeMono"
-        }
+        },
+        'SHAP': {
+            'CLASS_INDEX': 1, # can be 0/1 or even 2 if n_classes>=2
+            'COLOR_SCHEME': 'coolwarm_r'
+        },
     }
 }

@@ -3,6 +3,7 @@ import os
 import gc as hp_optim_gc
 from itertools import product
 import optuna
+import shap
 from sklearn.feature_selection import mutual_info_classif
 from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
 from sklearn.model_selection._search import BaseSearchCV
@@ -295,6 +296,49 @@ def MODEL_BUILD_GENERATE_RESULTS (regressor, featureList: list, trainFilePath: s
     )
     plt.close(fig)
 
+    # SHAP outputs
+    SHAP_CONFIGS = PLOT_PROPS['SHAP']
+    explainer = shap.Explainer(regressor, x_train) # Create a SHAP explainer
+    shap_values = explainer.shap_values(x_train, check_additivity=False) # Calculate SHAP values for the training data
+    shap_n_classes = shap_values.shape[2]
+    shap_index_configured = int(SHAP_CONFIGS['CLASS_INDEX']) if 0<=int(SHAP_CONFIGS['CLASS_INDEX'])<shap_n_classes else 1 
+    shap_values_selected = shap_values[:, :, shap_index_configured]
+
+    # Generate SHAP summary plot with built-in color control
+    plt.clf()
+    shap.summary_plot(shap_values_selected, x_train, plot_type="dot", cmap=SHAP_CONFIGS['COLOR_SCHEME'], show=False)
+
+    font_settings = {
+        'fontsize': PLOT_PROPS['RC_PARAMS']['FONT_SIZE'], 
+        'fontweight': PLOT_PROPS['RC_PARAMS']['FONT_WEIGHT'], 
+        'fontfamily': PLOT_PROPS['RC_PARAMS']['FONT_STYLE']
+    }
+
+    #Modify SHAP's internal figure AFTER it is created
+    fig = plt.gcf()
+    fig.set_size_inches(10, 8)  # Adjust figure size
+    plt.xticks(**font_settings)
+    plt.yticks(**font_settings)
+    plt.xlabel("SHAP Value", **font_settings)
+    plt.ylabel("Features", **font_settings)
+
+    colorbar = plt.gcf().axes[-1]  # Get the last axis, which is usually the colorbar
+    colorbar.tick_params(labelsize=font_settings['fontsize'])  # Change tick label size
+    for text in colorbar.get_yticklabels():  # Iterate over tick labels
+        text.set_fontname(font_settings['fontfamily'])  # Set font family
+        text.set_fontweight(font_settings['fontweight'])
+
+    colorbar.set_ylabel("Feature Importance", **font_settings)
+    # plt.title(
+    #     f'Shap Summary for Class {shap_index_configured}', 
+    #     fontsize=PLOT_PROPS['TITLE']['FONT_SIZE'], 
+    #     fontweight=PLOT_PROPS['TITLE']['FONT_WEIGHT'], 
+    #     fontname=PLOT_PROPS['TITLE']['FONT_STYLE']
+    # )
+    plt.savefig(
+        os.path.join('output', f'{regressorName}_Shap_Summary.png')
+    )
+    plt.close(fig)
     return results
 
 PARAM_GRID_KEYS_NOT_FOR_HP_OPTIM = {'FEATURES','METHOD','SCORING','CROSS_FOLD_VALID'}
