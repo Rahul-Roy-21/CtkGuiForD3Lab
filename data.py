@@ -9,7 +9,7 @@ _COMMON_PROPS = {
         'scoring_opts': [
             'accuracy', 'balanced_accuracy','average_precision','f1','f1_micro', 'f1_macro', 'f1_weighted','precision', 'recall', 'jaccard','roc_auc', 'roc_auc_ovr','roc_auc_ovo', 'roc_auc_ovr_weighted','roc_auc_ovo_weighted'
         ],
-        'optuna_total_trials' : 20,
+        'optuna_total_trials' : 40,
     }
 }
 
@@ -318,16 +318,180 @@ DATA = {
         'TITLE' : {
             'FONT_SIZE': 21,
             'FONT_WEIGHT': "bold",
-            'FONT_STYLE' : "Photonico Code"
+            'FONT_STYLE' : "Helvatica"
         },
         'RC_PARAMS': {
             'FONT_SIZE': 12,
             'FONT_WEIGHT': "bold",
-            'FONT_STYLE' : "FreeMono"
+            'FONT_STYLE' : "Merienda"
         },
         'SHAP': {
             'CLASS_INDEX': 1, # can be 0/1 or even 2 if n_classes>=2
             'COLOR_SCHEME': 'coolwarm_r'
         },
+        'OPTUNA': {
+            'plot1': {
+                'layout' : {
+                    'title': 'Optimization History',
+                    'height': 600,
+                    'width': 800,
+                    'plot_bgcolor': 'whitesmoke',
+                    'paper_bgcolor': 'white',
+                    'xaxis': {
+                        'tickangle':45,
+                        'showgrid':True,
+                        'gridcolor':'white',
+                        'dtick':50, 
+                        'zeroline':False,
+                        'zerolinecolor':'white',
+                        'zerolinewidth':2
+                    },
+                    'yaxis': {
+                        'tickangle':45,
+                        'showgrid':True,
+                        'gridcolor':'white',
+                        'dtick':50, 
+                        'zeroline':False,
+                        'zerolinecolor':'white',
+                        'zerolinewidth':2
+                    }
+                },
+                'traces': {
+                    'marker_color':'blue',
+                    'line_color': 'red',
+                }
+            },
+            'plot2': {
+                'layout': {
+                    'title': 'Hyperparameter Importances',
+                    'height': 500,
+                    'width': 800,
+                    'plot_bgcolor': 'whitesmoke',
+                    'paper_bgcolor': 'white',
+                    'bargap':0.2,
+                    'xaxis': {
+                        'title': 'Importance',
+                        'showline':True,
+                        'linecolor': 'white',
+                        'linewidth':1,
+                        'tickangle':45,
+                        'ticklen':15,
+                        'dtick':0.1,
+                        'showgrid':True,
+                        'gridcolor':'white',
+                        'gridwidth':0.5,
+                    },
+                    'yaxis': {
+                        'title': 'HyperParameters',
+                        'tickangle':0,
+                    }
+                },
+                'traces': {
+                    'marker_color':'red',
+                }
+            },
+            'plot3': {
+                'layout': {
+                    'title': 'Parallel Coordinate Plot',
+                    'height': 600,
+                    'width': 800,
+                    'plot_bgcolor': 'whitesmoke',
+                    'paper_bgcolor': 'white',
+                },
+                'traces': {
+                    'line': {
+                        'colorscale': 'turbo_r',
+                        'showscale':True,
+                        'colorbar': {
+                            'title': 'ColorScale'
+                        }
+                    }
+                }
+            },
+            'plot4': {
+                'layout': {
+                    'title':'Slice Plot',
+                    'height': 600,
+                    'width': 1000,
+                    'plot_bgcolor': 'whitesmoke',
+                    'paper_bgcolor': 'white',
+                },
+                'traces': {
+                    'marker':{
+                        'size':6,
+                        'colorbar':{ 
+                            'title': 'Color_Scale'
+                        },
+                        'colorscale':'portland'
+                    }
+                },
+                'xaxis': {
+                    'showgrid':True,
+                    'gridcolor':'white',
+                    'gridwidth':1,
+                    'zeroline':True,
+                    'zerolinecolor':'white',
+                    'showticklabels':True
+                },
+                'yaxis': {
+                    'showgrid':True,
+                    'gridcolor':'white',
+                    'gridwidth':1,
+                    'zeroline':True,
+                    'zerolinecolor':'white',
+                    'showticklabels':True
+                }
+            },
+            'plot5': {
+                'layout': {
+                    'title':'Contour Plot',
+                    'height': 1000,
+                    'width': 1000,
+                    'plot_bgcolor': 'whitesmoke',
+                    'paper_bgcolor': 'white',
+                },
+                'xaxis': {
+                    'showline':True,
+                    'linecolor': 'white',
+                    'linewidth':1,
+                    'showgrid':True,
+                    'gridcolor':'white',
+                    'gridwidth':1,
+                },
+                'yaxis': {
+                    'showline':True,
+                    'linecolor': 'white',
+                    'linewidth':1,
+                    'showgrid':True,
+                    'gridcolor':'white',
+                    'gridwidth':1,
+                },
+                'traces': {
+                    'selector': {
+                        'type': 'contour'
+                    },
+                    'colorscale': 'portland',
+                    'contours': {
+                        'coloring':'fill',
+                        'showlines':True,  # Show contour lines
+                        'size':0.5,
+                        #'start':0,
+                        #'end':1
+                    },
+                    'line': {
+                        'color':'white',
+                        'width':1
+                    },
+                    'colorbar': {
+                        'title':'Color_Scale',
+                        'titleside': 'right',
+                        'tickfont': {
+                            'size':12,
+                            'color': 'black'
+                        }
+                    }
+                }
+            },
+        }
     }
 }

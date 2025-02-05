@@ -3,6 +3,9 @@ import os
 import gc as hp_optim_gc
 from itertools import product
 import optuna
+import optuna.visualization as vis
+import plotly.io as pio
+from plotly.graph_objects import Figure as plotly_figure
 import shap
 from sklearn.feature_selection import mutual_info_classif
 from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
@@ -180,6 +183,99 @@ def HP_OPTIM_GENERATE_RESULTS (hp_optim_methodInstance: BaseSearchCV, hp_optim_m
         index=False
     )
     return hp_optim_methodInstance.best_params_
+
+def _UPDATE_FONT_PROPERTIES(fig: plotly_figure, font_settings: dict, title_settings:dict):
+    fig.update_layout(
+        font=font_settings,
+        title_font=title_settings,
+        legend=dict(font=font_settings),
+        xaxis_title_font=font_settings,
+        yaxis_title_font=font_settings,
+        xaxis_tickfont=font_settings,
+        yaxis_tickfont=font_settings
+    )
+
+def OPTUNA_GENERATE_PLOTS (study: optuna.study.Study, algo_name: str):
+    font_settings = dict(family=PLOT_PROPS['RC_PARAMS']['FONT_STYLE'], size=PLOT_PROPS['RC_PARAMS']['FONT_SIZE'])
+    title_settings = dict(family=PLOT_PROPS['TITLE']['FONT_STYLE'], size=PLOT_PROPS['TITLE']['FONT_SIZE'])
+
+    # plot-1
+    _plot1_cfgs = PLOT_PROPS['OPTUNA']['plot1']
+    fig1 = vis.plot_optimization_history(study)
+    fig1.update_layout(
+        title_font=title_settings,
+        font=font_settings,
+        **_plot1_cfgs['layout']
+    )
+    fig1.update_traces(**_plot1_cfgs['traces'])
+    _UPDATE_FONT_PROPERTIES(fig1, font_settings, title_settings)
+    CHECK_DIR('output')
+    pio.write_image(fig1, f'output/{algo_name}_optimization_history.png', format='png', scale=2)
+
+    # plot-2
+    _plot2_cfgs = PLOT_PROPS['OPTUNA']['plot2']
+    fig2 = vis.plot_param_importances(study)
+    fig2.update_layout(
+        title_font=title_settings,
+        font=font_settings,
+        **_plot2_cfgs['layout']
+    )
+    fig2.update_traces(**_plot2_cfgs['traces'])
+    _UPDATE_FONT_PROPERTIES(fig2, font_settings, title_settings)
+    CHECK_DIR('output')
+    pio.write_image(fig2, f'output/{algo_name}_param_importance.png', format='png', scale=2)
+
+    # plot-3
+    _plot3_cfgs = PLOT_PROPS['OPTUNA']['plot3']
+    fig3 = vis.plot_parallel_coordinate(study)
+    fig3.update_layout(
+        title_font=title_settings,
+        font=font_settings,
+        **_plot3_cfgs['layout']
+    )
+    fig3.update_traces(**_plot3_cfgs['traces'])
+    _UPDATE_FONT_PROPERTIES(fig3, font_settings, title_settings)
+    CHECK_DIR('output')
+    pio.write_image(fig3, f'output/{algo_name}_parallel_coordinate.png', format='png', scale=2)
+
+    # plot-4
+    _plot4_cfgs = PLOT_PROPS['OPTUNA']['plot4']
+    fig4 = vis.plot_slice(study)
+    num_subplots = len(fig4.data)
+    xaxis_settings, yaxis_settings = {}, {}
+    for i in range(num_subplots):
+        xaxis_settings[f'xaxis{i+1}' if i>0 else 'xaxis'] = _plot4_cfgs['xaxis']
+        yaxis_settings[f'yaxis{i+1}' if i>0 else 'yaxis'] = _plot4_cfgs['yaxis']
+
+    fig4.update_layout(
+        **_plot4_cfgs['layout'],
+        **xaxis_settings,
+        **yaxis_settings
+    )
+    fig4.update_traces(**_plot4_cfgs['traces'])
+    _UPDATE_FONT_PROPERTIES(fig4, font_settings, title_settings)
+    CHECK_DIR('output')
+    pio.write_image(fig4, f'output/{algo_name}_slice.png', format='png', scale=2)
+
+    # plot-5
+    _plot5_cfgs = PLOT_PROPS['OPTUNA']['plot5']
+    fig5 = vis.plot_contour(study)
+    num_subplots = len(fig5.data)
+    xaxis_settings, yaxis_settings = {}, {}
+    for i in range(num_subplots):
+        xaxis_settings[f'xaxis{i+1}' if i>0 else 'xaxis'] = _plot5_cfgs['xaxis']
+        yaxis_settings[f'yaxis{i+1}' if i>0 else 'yaxis'] = _plot5_cfgs['yaxis']
+
+    fig5.update_layout(
+        **_plot5_cfgs['layout'],
+        **xaxis_settings,
+        **yaxis_settings
+    )
+    fig5.update_traces(**_plot5_cfgs['traces'])
+    _UPDATE_FONT_PROPERTIES(fig5, font_settings, title_settings)
+    CHECK_DIR('output')
+    pio.write_image(fig5, f'output/{algo_name}_contour.png', format='png', scale=2)
+
 
 def MODEL_BUILD_GENERATE_RESULTS (regressor, featureList: list, trainFilePath: str, testFilePath: str, regressorName: str) -> dict:
     trainDF = pd.read_excel(trainFilePath)
@@ -470,6 +566,7 @@ def RF_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
         )
         IN_PROGRESS._COMPLETE_OPTUNA_PROGRESS()
         results = rf_study.best_params
+        OPTUNA_GENERATE_PLOTS(rf_study, 'RF')
         return results
     else:
         raise Exception(f"Unknown Method for HP_OPTIMIZATION: {PROCESS_PARAMS['METHOD']}")
@@ -576,6 +673,7 @@ def SVM_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
         )
         IN_PROGRESS._COMPLETE_OPTUNA_PROGRESS()
         results = svm_study.best_params
+        OPTUNA_GENERATE_PLOTS(svm_study, 'SVC')
         return results
     else:
         raise Exception(f"Unknown Method for HP_OPTIMIZATION: {PROCESS_PARAMS['METHOD']}")
@@ -679,6 +777,7 @@ def LDA_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
         )
         IN_PROGRESS._COMPLETE_OPTUNA_PROGRESS()
         results = lda_study.best_params
+        OPTUNA_GENERATE_PLOTS(lda_study, 'LDA')
         return results
     else:
         raise Exception(f"Unknown Method for HP_OPTIMIZATION: {PROCESS_PARAMS['METHOD']}")
@@ -803,6 +902,7 @@ def LR_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
         )
         IN_PROGRESS._COMPLETE_OPTUNA_PROGRESS()
         results = lr_study.best_params
+        OPTUNA_GENERATE_PLOTS(lr_study, 'LR')
         return results
     else:
         raise Exception(f"Unknown Method for HP_OPTIMIZATION: {PROCESS_PARAMS['METHOD']}")
@@ -912,6 +1012,7 @@ def KNN_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
         )
         IN_PROGRESS._COMPLETE_OPTUNA_PROGRESS()
         results = knn_study.best_params
+        OPTUNA_GENERATE_PLOTS(knn_study, 'KNN')
         return results
     else:
         raise Exception(f"Unknown Method for HP_OPTIMIZATION: {PROCESS_PARAMS['METHOD']}")
@@ -1040,6 +1141,7 @@ def GB_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
         )
         IN_PROGRESS._COMPLETE_OPTUNA_PROGRESS()
         results = gb_study.best_params
+        OPTUNA_GENERATE_PLOTS(gb_study, 'GB')
         return results
     else:
         raise Exception(f"Unknown Method for HP_OPTIMIZATION: {PROCESS_PARAMS['METHOD']}")
@@ -1204,6 +1306,8 @@ def MLP_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
             del[results[f'n_layer_{layer_idx}']]
         del[results['n_layers']]
         results['hidden_layer_sizes'] = tuple(hidden_layer_sizes)
+
+        OPTUNA_GENERATE_PLOTS(mlp_study, 'MLP')
         return results
     else:
         raise Exception(f"Unknown Method for HP_OPTIMIZATION: {PROCESS_PARAMS['METHOD']}")
