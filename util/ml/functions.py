@@ -276,6 +276,112 @@ def OPTUNA_GENERATE_PLOTS (study: optuna.study.Study, algo_name: str):
     CHECK_DIR('output')
     pio.write_image(fig5, f'output/{algo_name}_contour.png', format='png', scale=2)
 
+def SHAP_GENERATE_PLOT (model, X_train: pd.DataFrame, y_train: pd.DataFrame, model_algorithm: str):
+    # SHAP outputs
+    SHAP_CONFIGS = PLOT_PROPS['SHAP']
+    if not SHAP_CONFIGS['ENABLED']:
+        print('Shap is not enabled, quiting shap plots!')
+        return
+    
+    #_class_index = SHAP_CONFIGS['CLASS_INDEX']
+    _shap_cmap = SHAP_CONFIGS['COLOR_SCHEME']
+
+    if model_algorithm=='RF':
+        explainer = shap.Explainer(model, X_train)
+        shap_values = explainer.shap_values(X_train, check_additivity=False)
+        plt.clf()
+        shap.summary_plot(shap_values[:, :, 1], X_train, cmap=_shap_cmap, show=False) # Class 1 Shap
+
+    elif model_algorithm=='SVM':
+        explainer = shap.PermutationExplainer(model.predict_proba, X_train)  # Using full training set
+        shap_values = explainer(X_train)
+        plt.clf()
+        shap.summary_plot(shap_values[:, :, 1], X_train, cmap=_shap_cmap, show=False)
+
+    elif model_algorithm=='LR':
+        # ?? = whether to filter class_1 compounds
+        class_1_indices = np.where(y_train == 1)[0]
+        X_train_class_1 = X_train.iloc[class_1_indices]  # Keep DataFrame structure
+
+        explainer = shap.PermutationExplainer(model.predict_proba, X_train)  # Using full training set
+        shap_values = explainer(X_train_class_1)
+        plt.clf()
+        shap.summary_plot(shap_values[:, :, 1], X_train_class_1, cmap=_shap_cmap, show=False)
+
+    elif model_algorithm=='LDA':
+        explainer = shap.Explainer(model, X_train)
+        shap_values = explainer(X_train)
+        # Generate SHAP summary plot for class 1
+        # The shap_values object contains SHAP values for all classes
+        plt.clf()
+        shap.summary_plot(shap_values, X_train, class_names=['Class 0', 'Class 1'], class_inds=[1],  cmap=_shap_cmap, show=False)
+
+    elif model_algorithm=='KNN':
+        class_1_indices = np.where(y_train == 1)[0]
+        X_train_class_1 = X_train.iloc[class_1_indices]
+
+        explainer = shap.PermutationExplainer(model.predict_proba, X_train)
+        shap_values = explainer(X_train_class_1) # Compute SHAP values specifically for Class 1 compounds
+        plt.clf()
+        shap.summary_plot(shap_values[:, :, 1], X_train_class_1, cmap=_shap_cmap, show=False)
+
+    elif model_algorithm=='GB':
+        explainer = shap.Explainer(model, X_train)
+        shap_values = explainer(X_train, check_additivity=False)
+
+        # Filter SHAP values and features for class 1 compounds
+        class_1_indices = [i for i, label in enumerate(y_train) if label == 1]
+        shap_values_class_1 = shap_values[class_1_indices]
+        X_train_class_1 = X_train.iloc[class_1_indices]
+
+        # Generate SHAP summary plot for class 1 compounds
+        plt.clf()
+        shap.summary_plot(shap_values_class_1, X_train_class_1, cmap=_shap_cmap, show=False)
+
+    elif model_algorithm=='MLP':
+        class_1_indices = np.where(y_train == 1)[0]
+        X_train_class_1 = X_train.iloc[class_1_indices]  # Keep DataFrame structure
+
+        explainer = shap.PermutationExplainer(model.predict_proba, X_train)
+        shap_values = explainer(X_train_class_1)
+        plt.clf()
+        shap.summary_plot(shap_values[:, :, 1], X_train_class_1, cmap=_shap_cmap, show=False)
+    
+    else:
+        raise Exception(f'unknown Model algorithm - {model_algorithm} for Shap plots !!')
+
+    font_settings = {
+        'fontsize': PLOT_PROPS['RC_PARAMS']['FONT_SIZE'], 
+        'fontweight': PLOT_PROPS['RC_PARAMS']['FONT_WEIGHT'], 
+        'fontfamily': PLOT_PROPS['RC_PARAMS']['FONT_STYLE']
+    }
+
+    #Modify SHAP's internal figure AFTER it is created
+    fig = plt.gcf()
+    fig.set_size_inches(10, 8)  # Adjust figure size
+    plt.xticks(**font_settings)
+    plt.yticks(**font_settings)
+    plt.xlabel("SHAP Value", **font_settings)
+    plt.ylabel("Features", **font_settings)
+
+    colorbar = plt.gcf().axes[-1]  # Get the last axis, which is usually the colorbar
+    colorbar.tick_params(labelsize=font_settings['fontsize'])  # Change tick label size
+    for text in colorbar.get_yticklabels():  # Iterate over tick labels
+        text.set_fontname(font_settings['fontfamily'])  # Set font family
+        text.set_fontweight(font_settings['fontweight'])
+
+    colorbar.set_ylabel("Feature Importance", **font_settings)
+    # plt.title(
+    #     f'Shap Summary for Class {shap_index_configured}', 
+    #     fontsize=PLOT_PROPS['TITLE']['FONT_SIZE'], 
+    #     fontweight=PLOT_PROPS['TITLE']['FONT_WEIGHT'], 
+    #     fontname=PLOT_PROPS['TITLE']['FONT_STYLE']
+    # )
+    plt.savefig(
+        os.path.join('output', f'{model_algorithm}_Shap_Summary.png')
+    )
+    plt.close(fig)
+
 
 def MODEL_BUILD_GENERATE_RESULTS (regressor, featureList: list, trainFilePath: str, testFilePath: str, regressorName: str) -> dict:
     trainDF = pd.read_excel(trainFilePath)
@@ -393,48 +499,7 @@ def MODEL_BUILD_GENERATE_RESULTS (regressor, featureList: list, trainFilePath: s
     plt.close(fig)
 
     # SHAP outputs
-    SHAP_CONFIGS = PLOT_PROPS['SHAP']
-    explainer = shap.Explainer(regressor, x_train) # Create a SHAP explainer
-    shap_values = explainer.shap_values(x_train, check_additivity=False) # Calculate SHAP values for the training data
-    shap_n_classes = shap_values.shape[2]
-    shap_index_configured = int(SHAP_CONFIGS['CLASS_INDEX']) if 0<=int(SHAP_CONFIGS['CLASS_INDEX'])<shap_n_classes else 1 
-    shap_values_selected = shap_values[:, :, shap_index_configured]
-
-    # Generate SHAP summary plot with built-in color control
-    plt.clf()
-    shap.summary_plot(shap_values_selected, x_train, plot_type="dot", cmap=SHAP_CONFIGS['COLOR_SCHEME'], show=False)
-
-    font_settings = {
-        'fontsize': PLOT_PROPS['RC_PARAMS']['FONT_SIZE'], 
-        'fontweight': PLOT_PROPS['RC_PARAMS']['FONT_WEIGHT'], 
-        'fontfamily': PLOT_PROPS['RC_PARAMS']['FONT_STYLE']
-    }
-
-    #Modify SHAP's internal figure AFTER it is created
-    fig = plt.gcf()
-    fig.set_size_inches(10, 8)  # Adjust figure size
-    plt.xticks(**font_settings)
-    plt.yticks(**font_settings)
-    plt.xlabel("SHAP Value", **font_settings)
-    plt.ylabel("Features", **font_settings)
-
-    colorbar = plt.gcf().axes[-1]  # Get the last axis, which is usually the colorbar
-    colorbar.tick_params(labelsize=font_settings['fontsize'])  # Change tick label size
-    for text in colorbar.get_yticklabels():  # Iterate over tick labels
-        text.set_fontname(font_settings['fontfamily'])  # Set font family
-        text.set_fontweight(font_settings['fontweight'])
-
-    colorbar.set_ylabel("Feature Importance", **font_settings)
-    # plt.title(
-    #     f'Shap Summary for Class {shap_index_configured}', 
-    #     fontsize=PLOT_PROPS['TITLE']['FONT_SIZE'], 
-    #     fontweight=PLOT_PROPS['TITLE']['FONT_WEIGHT'], 
-    #     fontname=PLOT_PROPS['TITLE']['FONT_STYLE']
-    # )
-    plt.savefig(
-        os.path.join('output', f'{regressorName}_Shap_Summary.png')
-    )
-    plt.close(fig)
+    SHAP_GENERATE_PLOT(regressor, x_train, y_train, regressorName)
     return results
 
 PARAM_GRID_KEYS_NOT_FOR_HP_OPTIM = {'FEATURES','METHOD','SCORING','CROSS_FOLD_VALID'}
@@ -1324,7 +1389,7 @@ def RF_MODEL_BUILD_PROCESS (RfMB_ValidatedInputs: dict, trainFilePath: str, test
         featureList=FEATURES_LIST,
         trainFilePath=trainFilePath,
         testFilePath=testFilePath,
-        regressorName='RFC'
+        regressorName='RF'
     )
     return results
 
@@ -1352,7 +1417,7 @@ def SVM_MODEL_BUILD_PROCESS (SvmMB_ValidatedInputs: dict, trainFilePath: str, te
         featureList=FEATURES_LIST,
         trainFilePath=trainFilePath,
         testFilePath=testFilePath,
-        regressorName='SVC'
+        regressorName='SVM'
     )
     return results
 

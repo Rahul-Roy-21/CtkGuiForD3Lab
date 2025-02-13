@@ -20,8 +20,8 @@ DATA = {
     },
     "fonts": {
         "my_font_1": {
-            "family":  "Minimalust",
-            #"family": 'freemono',
+            #"family":  "Minimalust",
+            "family": 'Courier New',
             "size": 13,
             "weight": "normal"
         }
@@ -318,7 +318,7 @@ DATA = {
         'TITLE' : {
             'FONT_SIZE': 21,
             'FONT_WEIGHT': "bold",
-            'FONT_STYLE' : "Helvatica"
+            'FONT_STYLE' : "Cambria"
         },
         'RC_PARAMS': {
             'FONT_SIZE': 12,
@@ -326,6 +326,7 @@ DATA = {
             'FONT_STYLE' : "Merienda"
         },
         'SHAP': {
+            'ENABLED': True,
             'CLASS_INDEX': 1, # can be 0/1 or even 2 if n_classes>=2
             'COLOR_SCHEME': 'coolwarm_r'
         },
