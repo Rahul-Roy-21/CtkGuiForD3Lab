@@ -2,6 +2,7 @@ import pandas as pd
 import os
 import gc as hp_optim_gc
 from itertools import product
+from typing import Callable
 import optuna
 import optuna.visualization as vis
 import plotly.io as pio
@@ -24,18 +25,20 @@ from sklearn.metrics import confusion_matrix, classification_report, RocCurveDis
 import numpy as np
 import matplotlib.pyplot as plt
 import plotly.io as pio
-from matplotlib import rcParams
+import matplotlib
 from data import DATA, _COMMON_PROPS
 from json import dumps as jsonDumps
 from util.gui.widgets import InProgressWindow
+
+matplotlib.use('Agg')
 
 PLOT_PROPS = DATA['plot_properties']
 OPTUNA_TOTAL_TRIALS = _COMMON_PROPS['hp_optim']['optuna_total_trials']
 
 # Set global font properties
-rcParams['font.family'] = PLOT_PROPS['RC_PARAMS']['FONT_STYLE']
-rcParams['font.size'] = PLOT_PROPS['RC_PARAMS']['FONT_SIZE']
-rcParams['font.weight'] = PLOT_PROPS['RC_PARAMS']['FONT_WEIGHT'] 
+matplotlib.rcParams['font.family'] = PLOT_PROPS['RC_PARAMS']['FONT_STYLE']
+matplotlib.rcParams['font.size'] = PLOT_PROPS['RC_PARAMS']['FONT_SIZE']
+matplotlib.rcParams['font.weight'] = PLOT_PROPS['RC_PARAMS']['FONT_WEIGHT'] 
 
 def CHECK_DIR(output_dir):
     if not os.path.exists(output_dir):
@@ -276,13 +279,16 @@ def OPTUNA_GENERATE_PLOTS (study: optuna.study.Study, algo_name: str):
     CHECK_DIR('output')
     pio.write_image(fig5, f'output/{algo_name}_contour.png', format='png', scale=2)
 
-def SHAP_GENERATE_PLOT (model, X_train: pd.DataFrame, y_train: pd.DataFrame, model_algorithm: str):
+def SHAP_GENERATE_PLOT (model, X_train: pd.DataFrame, y_train: pd.DataFrame, model_algorithm: str, 
+    inProgressUpdateFunc: Callable[[str], None]):
     # SHAP outputs
     SHAP_CONFIGS = PLOT_PROPS['SHAP']
     if not SHAP_CONFIGS['ENABLED']:
+        inProgressUpdateFunc('Shap is not enabled,\nquiting shap plots!')
         print('Shap is not enabled, quiting shap plots!')
         return
     
+    inProgressUpdateFunc('Generating\nShap Summary Plot......')
     #_class_index = SHAP_CONFIGS['CLASS_INDEX']
     _shap_cmap = SHAP_CONFIGS['COLOR_SCHEME']
 
@@ -382,8 +388,7 @@ def SHAP_GENERATE_PLOT (model, X_train: pd.DataFrame, y_train: pd.DataFrame, mod
     )
     plt.close(fig)
 
-
-def MODEL_BUILD_GENERATE_RESULTS (regressor, featureList: list, trainFilePath: str, testFilePath: str, regressorName: str) -> dict:
+def MODEL_BUILD_GENERATE_RESULTS (regressor, featureList: list, trainFilePath: str, testFilePath: str, regressorName: str, inProgressUpdateFunc: Callable[[str], None]) -> dict:
     trainDF = pd.read_excel(trainFilePath)
     testDF = pd.read_excel(testFilePath)
     columnsToSelect = featureList
@@ -400,6 +405,7 @@ def MODEL_BUILD_GENERATE_RESULTS (regressor, featureList: list, trainFilePath: s
     y_score2 = regressor.predict_proba(x_test)[:,1]
 
     # PREPARE RESULTS..
+    inProgressUpdateFunc('Preparing\nResults..')
     results = {
         'accuracy_train' : round(accuracy_score(y_train, y_train_pred), 4),
         'accuracy_test' : round(accuracy_score(y_test, y_test_pred), 4),
@@ -450,6 +456,7 @@ def MODEL_BUILD_GENERATE_RESULTS (regressor, featureList: list, trainFilePath: s
         for output in output_list_rfr:
             my_file_rfr.write(str(output) + '\n')
 
+    inProgressUpdateFunc('Generating\nPlots..')
     # GENERATE <>_RocCurve_Test.png
     roc_te = RocCurveDisplay.from_estimator(regressor, x_test, y_test)
     plt.clf()
@@ -499,7 +506,8 @@ def MODEL_BUILD_GENERATE_RESULTS (regressor, featureList: list, trainFilePath: s
     plt.close(fig)
 
     # SHAP outputs
-    SHAP_GENERATE_PLOT(regressor, x_train, y_train, regressorName)
+    SHAP_GENERATE_PLOT(regressor, x_train, y_train, regressorName, inProgressUpdateFunc)
+    inProgressUpdateFunc('Done !!')
     return results
 
 PARAM_GRID_KEYS_NOT_FOR_HP_OPTIM = {'FEATURES','METHOD','SCORING','CROSS_FOLD_VALID'}
@@ -1379,7 +1387,7 @@ def MLP_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
 
 #---------MODEL BUILD -----------
 
-def RF_MODEL_BUILD_PROCESS (RfMB_ValidatedInputs: dict, trainFilePath: str, testFilePath: str):
+def RF_MODEL_BUILD_PROCESS (RfMB_ValidatedInputs: dict, trainFilePath: str, testFilePath: str, inProgressUpdateFunc: Callable[[str], None]):
     FEATURES_LIST = RfMB_ValidatedInputs["FEATURES"]
     del(RfMB_ValidatedInputs["FEATURES"])
     rfc_regressor = RandomForestClassifier(**RfMB_ValidatedInputs, oob_score=True)
@@ -1389,11 +1397,12 @@ def RF_MODEL_BUILD_PROCESS (RfMB_ValidatedInputs: dict, trainFilePath: str, test
         featureList=FEATURES_LIST,
         trainFilePath=trainFilePath,
         testFilePath=testFilePath,
-        regressorName='RF'
+        regressorName='RF',
+        inProgressUpdateFunc=inProgressUpdateFunc
     )
     return results
 
-def GB_MODEL_BUILD_PROCESS (GbMB_ValidatedInputs: dict, trainFilePath: str, testFilePath: str):
+def GB_MODEL_BUILD_PROCESS (GbMB_ValidatedInputs: dict, trainFilePath: str, testFilePath: str, inProgressUpdateFunc: Callable[[str], None]):
     FEATURES_LIST = GbMB_ValidatedInputs["FEATURES"]
     del(GbMB_ValidatedInputs["FEATURES"])
     gb_regressor = GradientBoostingClassifier(**GbMB_ValidatedInputs)
@@ -1403,11 +1412,12 @@ def GB_MODEL_BUILD_PROCESS (GbMB_ValidatedInputs: dict, trainFilePath: str, test
         featureList=FEATURES_LIST,
         trainFilePath=trainFilePath,
         testFilePath=testFilePath,
-        regressorName='GB'
+        regressorName='GB',
+        inProgressUpdateFunc=inProgressUpdateFunc
     )
     return results
 
-def SVM_MODEL_BUILD_PROCESS (SvmMB_ValidatedInputs: dict, trainFilePath: str, testFilePath: str):
+def SVM_MODEL_BUILD_PROCESS (SvmMB_ValidatedInputs: dict, trainFilePath: str, testFilePath: str, inProgressUpdateFunc: Callable[[str], None]):
     FEATURES_LIST = SvmMB_ValidatedInputs["FEATURES"]
     del[SvmMB_ValidatedInputs['FEATURES']]
     svm_regressor = SVC(**SvmMB_ValidatedInputs)
@@ -1417,11 +1427,12 @@ def SVM_MODEL_BUILD_PROCESS (SvmMB_ValidatedInputs: dict, trainFilePath: str, te
         featureList=FEATURES_LIST,
         trainFilePath=trainFilePath,
         testFilePath=testFilePath,
-        regressorName='SVM'
+        regressorName='SVM',
+        inProgressUpdateFunc=inProgressUpdateFunc
     )
     return results
 
-def LR_MODEL_BUILD_PROCESS (LrMB_ValidatedInputs: dict, trainFilePath: str, testFilePath: str):
+def LR_MODEL_BUILD_PROCESS (LrMB_ValidatedInputs: dict, trainFilePath: str, testFilePath: str, inProgressUpdateFunc: Callable[[str], None]):
     FEATURES_LIST = LrMB_ValidatedInputs["FEATURES"]
     del[LrMB_ValidatedInputs['FEATURES']]
     lr_regressor = LogisticRegression(**LrMB_ValidatedInputs)
@@ -1431,11 +1442,12 @@ def LR_MODEL_BUILD_PROCESS (LrMB_ValidatedInputs: dict, trainFilePath: str, test
         featureList=FEATURES_LIST,
         trainFilePath=trainFilePath,
         testFilePath=testFilePath,
-        regressorName='LR'
+        regressorName='LR',
+        inProgressUpdateFunc=inProgressUpdateFunc
     )
     return results
 
-def LDA_MODEL_BUILD_PROCESS (LdaMB_ValidatedInputs: dict, trainFilePath: str, testFilePath: str):
+def LDA_MODEL_BUILD_PROCESS (LdaMB_ValidatedInputs: dict, trainFilePath: str, testFilePath: str, inProgressUpdateFunc: Callable[[str], None]):
     FEATURES_LIST = LdaMB_ValidatedInputs["FEATURES"]
     del[LdaMB_ValidatedInputs['FEATURES']]
     lda_regressor = LinearDiscriminantAnalysis(**LdaMB_ValidatedInputs)
@@ -1445,11 +1457,12 @@ def LDA_MODEL_BUILD_PROCESS (LdaMB_ValidatedInputs: dict, trainFilePath: str, te
         featureList=FEATURES_LIST,
         trainFilePath=trainFilePath,
         testFilePath=testFilePath,
-        regressorName='LDA'
+        regressorName='LDA',
+        inProgressUpdateFunc=inProgressUpdateFunc
     )
     return results
 
-def KNN_MODEL_BUILD_PROCESS (KnnMB_ValidatedInputs: dict, trainFilePath: str, testFilePath: str):
+def KNN_MODEL_BUILD_PROCESS (KnnMB_ValidatedInputs: dict, trainFilePath: str, testFilePath: str, inProgressUpdateFunc: Callable[[str], None]):
     FEATURES_LIST = KnnMB_ValidatedInputs["FEATURES"]
     del[KnnMB_ValidatedInputs['FEATURES']]
     knn_regressor = KNeighborsClassifier(**KnnMB_ValidatedInputs)
@@ -1459,11 +1472,12 @@ def KNN_MODEL_BUILD_PROCESS (KnnMB_ValidatedInputs: dict, trainFilePath: str, te
         featureList=FEATURES_LIST,
         trainFilePath=trainFilePath,
         testFilePath=testFilePath,
-        regressorName='KNN'
+        regressorName='KNN',
+        inProgressUpdateFunc=inProgressUpdateFunc
     )
     return results
 
-def MLP_MODEL_BUILD_PROCESS (MlpMB_ValidatedInputs: dict, trainFilePath: str, testFilePath: str):
+def MLP_MODEL_BUILD_PROCESS (MlpMB_ValidatedInputs: dict, trainFilePath: str, testFilePath: str, inProgressUpdateFunc: Callable[[str], None]):
     #print(f'[MLP_MODEL_BUILD_PROCESS]:\n{jsonDumps(MlpMB_ValidatedInputs, indent=5)}')
     FEATURES_LIST = MlpMB_ValidatedInputs["FEATURES"]
     del[MlpMB_ValidatedInputs['FEATURES']]
@@ -1474,6 +1488,7 @@ def MLP_MODEL_BUILD_PROCESS (MlpMB_ValidatedInputs: dict, trainFilePath: str, te
         featureList=FEATURES_LIST,
         trainFilePath=trainFilePath,
         testFilePath=testFilePath,
-        regressorName='MLP'
+        regressorName='MLP',
+        inProgressUpdateFunc=inProgressUpdateFunc
     )
     return results

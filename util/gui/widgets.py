@@ -4,6 +4,7 @@ from os import path as os_path
 import json
 from data import DATA, _COMMON_PROPS
 import optuna
+import time
 
 COLORS = DATA['colors']
 OPTUNA_TOTAL_TRIALS = _COMMON_PROPS['hp_optim']['optuna_total_trials']
@@ -895,6 +896,10 @@ class InProgressWindow:
                 frame = (frame + 1) % len(frames)  # Loop the GIF
                 self.progress_window.after(100, lambda: play_gif(frame))
             play_gif()  # Start the GIF animation
+
+    def update_progress_verdict(self, latest_update: str):
+        self.gif_label.configure(text=latest_update)
+        time.sleep(2)
 
     def destroy(self):
         # Only destroy the progress window if it exists

@@ -1,4 +1,5 @@
 import os
+#import sys
 import customtkinter as ctk
 from PIL import Image, ImageTk
 from data import DATA as CONFIG_DATA
@@ -6,6 +7,7 @@ from util.services import *
 from util.gui.panels import *
 from util.gui.labelframes import HyperParamOptim_AlgoLabelFrame, ModelBuild_AlgoLabelFrame, MyRangeEntryField, MultiSelectEntryField, MyStepRangeEntryField, MyLogarithmicRangeEntryField,StringField, OptionMenuField
 
+#sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 ctk.set_appearance_mode(CONFIG_DATA["settings"]["appearence_mode"])
 
 root=ctk.CTk()

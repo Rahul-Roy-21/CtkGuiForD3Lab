@@ -415,17 +415,24 @@ def RF_MODEL_BUILD_SUBMIT (master:CTk, loading_gif_path:str, RFmb_inputs: dict, 
     except:
         WARNINGS.append("max_leaf_nodes must be an INTEGER")
     
-    if len(WARNINGS) == 0:
-        print("[RF] VALIDATED_INPUTS: ", jsonDumps(RFmb_out, indent=2))
+    def func_to_update_inProgress_text(txt):
+        inProgress.update_progress_verdict(txt)
+
+    def run_process():
         try:
             processResultDict = RF_MODEL_BUILD_PROCESS(
                 RfMB_ValidatedInputs=RFmb_out, 
                 trainFilePath=trainEntryVar.get(),
-                testFilePath=testEntryVar.get()
+                testFilePath=testEntryVar.get(),
+                inProgressUpdateFunc=func_to_update_inProgress_text
             )
             master.after(1000, lambda processOut=processResultDict: update_success(processOut))
         except Exception as ex:
             master.after(1000, lambda warnings=[str(ex)]: update_failure(warnings))
+
+    if len(WARNINGS) == 0:
+        print("[RF] VALIDATED_INPUTS: ", jsonDumps(RFmb_out, indent=2))
+        Thread(target=run_process).start()
     else:
         master.after(1000, lambda warnings=WARNINGS: update_failure(warnings))
 
@@ -490,17 +497,28 @@ def SVM_MODEL_BUILD_SUBMIT (master:CTk, loading_gif_path:str, SVMmb_inputs: dict
     except:
         WARNINGS.append("random_state must be an INTEGER or 'None'")
     
-    if len(WARNINGS) == 0:
-        print("[SVM] VALIDATED_INPUTS: ", jsonDumps(SVMmb_out, indent=2))
+    def func_to_update_inProgress_text(txt):
+        inProgress.update_progress_verdict(txt)
+
+    def run_process ():
         try:
             processResultDict = SVM_MODEL_BUILD_PROCESS(
                 SvmMB_ValidatedInputs=SVMmb_out, 
                 trainFilePath=trainEntryVar.get(),
-                testFilePath=testEntryVar.get()
+                testFilePath=testEntryVar.get(),
+                inProgressUpdateFunc=func_to_update_inProgress_text
             )
+            print("DONE PROCESS")
             master.after(1000, lambda processOut=processResultDict: update_success(processOut))
         except Exception as ex:
             master.after(1000, lambda warnings=[str(ex)]: update_failure(warnings))
+
+    if len(WARNINGS) == 0:
+        print("[SVM] VALIDATED_INPUTS: ", jsonDumps(SVMmb_out, indent=2))
+        # Run this Heavy Task on seperate Thread, 
+        # Tkinter is singlethreaded with mainLoop() running on it, handles the GUI and TopLevel will show
+        # Running the run_process on main Thread will hang the GUI, arrest the main thread
+        Thread(target=run_process).start() 
     else:
         master.after(1000, lambda warnings=WARNINGS: update_failure(warnings))
 
@@ -554,17 +572,24 @@ def LDA_MODEL_BUILD_SUBMIT (master:CTk, loading_gif_path:str, LDAmb_inputs: dict
     # store_covariance
     LDAmb_out["store_covariance"] = True if LDAmb_out["store_covariance"].lower()=='true' else False
 
-    if len(WARNINGS) == 0:
-        print("[LDA] VALIDATED_INPUTS: ", jsonDumps(LDAmb_out, indent=2))
+    def func_to_update_inProgress_text(txt):
+        inProgress.update_progress_verdict(txt)
+
+    def run_process ():
         try:
             processResultDict = LDA_MODEL_BUILD_PROCESS(
                 LdaMB_ValidatedInputs=LDAmb_out, 
                 trainFilePath=trainEntryVar.get(),
-                testFilePath=testEntryVar.get()
+                testFilePath=testEntryVar.get(),
+                inProgressUpdateFunc=func_to_update_inProgress_text
             )
             master.after(1000, lambda processOut=processResultDict: update_success(processOut))
         except Exception as ex:
             master.after(1000, lambda warnings=[str(ex)]: update_failure(warnings))
+
+    if len(WARNINGS) == 0:
+        print("[LDA] VALIDATED_INPUTS: ", jsonDumps(LDAmb_out, indent=2))
+        Thread(target=run_process).start()
     else:
         master.after(1000, lambda warnings=WARNINGS: update_failure(warnings))
 
@@ -643,17 +668,24 @@ def LR_MODEL_BUILD_SUBMIT (master:CTk, loading_gif_path:str, LRmb_inputs: dict, 
     # warm_start
     LRmb_out["warm_start"] = True if LRmb_out["warm_start"].lower()=='true' else False
 
-    if len(WARNINGS) == 0:
-        print("[LR] VALIDATED_INPUTS: ", jsonDumps(LRmb_out, indent=2))
+    def func_to_update_inProgress_text(txt):
+        inProgress.update_progress_verdict(txt)
+
+    def run_process ():
         try:
             processResultDict = LR_MODEL_BUILD_PROCESS(
                 LrMB_ValidatedInputs=LRmb_out, 
                 trainFilePath=trainEntryVar.get(),
-                testFilePath=testEntryVar.get()
+                testFilePath=testEntryVar.get(),
+                inProgressUpdateFunc=func_to_update_inProgress_text
             )
             master.after(1000, lambda processOut=processResultDict: update_success(processOut))
         except Exception as ex:
             master.after(1000, lambda warnings=[str(ex)]: update_failure(warnings))
+
+    if len(WARNINGS) == 0:
+        print("[LR] VALIDATED_INPUTS: ", jsonDumps(LRmb_out, indent=2))
+        Thread(target=run_process).start()
     else:
         master.after(1000, lambda warnings=WARNINGS: update_failure(warnings))
 
@@ -714,18 +746,25 @@ def KNN_MODEL_BUILD_SUBMIT (master:CTk, loading_gif_path:str, KNNmb_inputs: dict
         KNNmb_out["n_jobs"] = None if KNNmb_out["n_jobs"].lower()=='none' else int(KNNmb_out["n_jobs"])
     except:
         WARNINGS.append("n_jobs must be an INTEGER or 'None'")
-    
-    if len(WARNINGS) == 0:
-        print("[KNN] VALIDATED_INPUTS: ", jsonDumps(KNNmb_out, indent=2))
+
+    def func_to_update_inProgress_text(txt):
+        inProgress.update_progress_verdict(txt)
+
+    def run_process ():
         try:
             processResultDict = KNN_MODEL_BUILD_PROCESS(
                 KnnMB_ValidatedInputs=KNNmb_out, 
                 trainFilePath=trainEntryVar.get(),
-                testFilePath=testEntryVar.get()
+                testFilePath=testEntryVar.get(),
+                inProgressUpdateFunc=func_to_update_inProgress_text
             )
             master.after(1000, lambda processOut=processResultDict: update_success(processOut))
         except Exception as ex:
             master.after(1000, lambda warnings=[str(ex)]: update_failure(warnings))
+
+    if len(WARNINGS) == 0:
+        print("[KNN] VALIDATED_INPUTS: ", jsonDumps(KNNmb_out, indent=2))
+        Thread(target=run_process).start()
     else:
         master.after(1000, lambda warnings=WARNINGS: update_failure(warnings))
 
@@ -864,17 +903,24 @@ def GB_MODEL_BUILD_SUBMIT (master:CTk, loading_gif_path:str, GBmb_inputs: dict, 
     except:
         WARNINGS.append("n_iter_no_change must be an INTEGER or None")
     
-    if len(WARNINGS) == 0:
-        print("[GB] VALIDATED_INPUTS: ", jsonDumps(GBmb_out, indent=2))
+    def func_to_update_inProgress_text(txt):
+        inProgress.update_progress_verdict(txt)
+
+    def run_process():
         try:
             processResultDict = GB_MODEL_BUILD_PROCESS(
                 GbMB_ValidatedInputs=GBmb_out, 
                 trainFilePath=trainEntryVar.get(),
-                testFilePath=testEntryVar.get()
+                testFilePath=testEntryVar.get(),
+                inProgressUpdateFunc=func_to_update_inProgress_text
             )
             master.after(1000, lambda processOut=processResultDict: update_success(processOut))
         except Exception as ex:
             master.after(1000, lambda warnings=[str(ex)]: update_failure(warnings))
+
+    if len(WARNINGS) == 0:
+        print("[GB] VALIDATED_INPUTS: ", jsonDumps(GBmb_out, indent=2))
+        Thread(target=run_process).start()
     else:
         master.after(1000, lambda warnings=WARNINGS: update_failure(warnings))
 
@@ -982,16 +1028,23 @@ def MLP_MODEL_BUILD_SUBMIT (master:CTk, loading_gif_path:str, MLPmb_inputs: dict
     MLPmb_out["nesterovs_momentum"] = bool(MLPmb_out["nesterovs_momentum"])
     MLPmb_out["early_stopping"] = bool(MLPmb_out["early_stopping"])
     
-    if len(WARNINGS) == 0:
-        print("[MLP] VALIDATED_INPUTS: ", jsonDumps(MLPmb_out, indent=2))
+    def func_to_update_inProgress_text(txt):
+        inProgress.update_progress_verdict(txt)
+
+    def run_process():
         try:
             processResultDict = MLP_MODEL_BUILD_PROCESS(
                 MlpMB_ValidatedInputs=MLPmb_out, 
                 trainFilePath=trainEntryVar.get(),
-                testFilePath=testEntryVar.get()
+                testFilePath=testEntryVar.get(),
+                inProgressUpdateFunc=func_to_update_inProgress_text
             )
             master.after(1000, lambda processOut=processResultDict: update_success(processOut))
         except Exception as ex:
             master.after(1000, lambda warnings=[str(ex)]: update_failure(warnings))
+
+    if len(WARNINGS) == 0:
+        print("[MLP] VALIDATED_INPUTS: ", jsonDumps(MLPmb_out, indent=2))
+        Thread(target=run_process).start()
     else:
         master.after(1000, lambda warnings=WARNINGS: update_failure(warnings))

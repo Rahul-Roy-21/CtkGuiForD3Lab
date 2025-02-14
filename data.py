@@ -1,7 +1,7 @@
 _COMMON_PROPS = {
     'feature_selection': {
-        'ranking_method': 'MDF', # MDF or MIS allowed
-        'min_features_selected': 5,
+        'ranking_method': 'MIS', # MDF or MIS allowed
+        'min_features_selected': 12,
     },
     'hp_optim': {
         'method_opts_without_Optuna': ['GridSearchCV','RandomizedSearchCV'],
@@ -318,17 +318,17 @@ DATA = {
         'TITLE' : {
             'FONT_SIZE': 21,
             'FONT_WEIGHT': "bold",
-            'FONT_STYLE' : "Cambria"
+            'FONT_STYLE' : "Times New Roman"
         },
         'RC_PARAMS': {
             'FONT_SIZE': 12,
             'FONT_WEIGHT': "bold",
-            'FONT_STYLE' : "Merienda"
+            'FONT_STYLE' : "Courier New"
         },
         'SHAP': {
             'ENABLED': True,
             'CLASS_INDEX': 1, # can be 0/1 or even 2 if n_classes>=2
-            'COLOR_SCHEME': 'coolwarm_r'
+            'COLOR_SCHEME': 'turbo_r'
         },
         'OPTUNA': {
             'plot1': {
