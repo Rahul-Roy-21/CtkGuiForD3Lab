@@ -874,7 +874,7 @@ class InProgressWindow:
         # Only create the progress window if it doesn't already exist
         if not self.is_active():
             self.progress_window = CTkToplevel(self.parent, fg_color='white')  # Directly reference root
-            self.progress_window.geometry("200x200")
+            self.progress_window.geometry("300x200")
             self.progress_window.title("Fetching..")
 
             # Label to display the GIF

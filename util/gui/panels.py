@@ -2,8 +2,9 @@ import customtkinter as ctk
 from PIL import Image
 from tkinter import filedialog
 import json
+from threading import Thread
 from util.ml.functions import CHECK_XLS_FILES, GET_RANKED_FEATURES
-from util.gui.widgets import CustomWarningBox, FeatureSelectEntry
+from util.gui.widgets import CustomWarningBox, FeatureSelectEntry, InProgressWindow
 from data import _COMMON_PROPS
 
 class TaskPanel:
@@ -247,25 +248,62 @@ class DataSetPanel:
     def validate_train_test_files(self):
         if not self.train_entryVar.get() or not self.test_entryVar.get():
             return
-        valid, loaded_columns = CHECK_XLS_FILES(self.train_entryVar.get(), self.test_entryVar.get())
-        if not valid:
-            self.ALL_LOADED_FEATURES.set("")
-            self.SELECTED_FEATURES.set("")
-            CustomWarningBox(
-                parent=self.master, my_font=self.my_font, 
-                warnings=["Train and Test files do not have identical column sets."]
-            )
-            return
         
-        ranked_features_dicts = GET_RANKED_FEATURES(self.train_entryVar.get())
-        self.ALL_LOADED_FEATURES.set(json.dumps(ranked_features_dicts))
+        from util.gui.widgets import getImgPath 
+        inProgress = InProgressWindow(self.master, self.my_font, getImgPath("check_files.gif"))
+        inProgress.create()
+        self.ranked_features_dicts = None
+    
+        def checking_excel_files ():
+            valid, _ = CHECK_XLS_FILES(self.train_entryVar.get(), self.test_entryVar.get())
+            if not valid:
+                self.ALL_LOADED_FEATURES.set("")
+                self.SELECTED_FEATURES.set("")
+                inProgress.destroy()
+                CustomWarningBox(
+                    parent=self.master, my_font=self.my_font, 
+                    warnings=["Train and Test files do not have identical column sets."]
+                )
+                return
         
-        MIN_COUNT_OF_FEATURES_TO_SELECT = int(_COMMON_PROPS['feature_selection']['min_features_selected'])
-        selected_features = [
-            rec['Feature'] for rec in ranked_features_dicts 
-            if rec['Rank']<=MIN_COUNT_OF_FEATURES_TO_SELECT
-        ]
-        self.SELECTED_FEATURES.set(",".join(selected_features))
+        def load_ranked_features ():
+            self.ranked_features_dicts = GET_RANKED_FEATURES(self.train_entryVar.get())
+            self.ALL_LOADED_FEATURES.set(json.dumps(self.ranked_features_dicts))
+        
+        def populate_loaded_features_to_selected ():
+            MIN_COUNT_OF_FEATURES_TO_SELECT = int(_COMMON_PROPS['feature_selection']['min_features_selected'])
+            selected_features = [
+                rec['Feature'] for rec in self.ranked_features_dicts 
+                if rec['Rank']<=MIN_COUNT_OF_FEATURES_TO_SELECT
+            ]
+            self.SELECTED_FEATURES.set(",".join(selected_features))
+
+        def step_2():
+            """ Step 2: Update progress & start feature extraction """
+            inProgress.update_progress_verdict('XLS files accepted.\nExtracting Features (with Ranks) ..')
+            Thread(target=lambda: async_wrapper(load_ranked_features, step_3)).start()
+
+        def step_3():
+            """ Step 3: Update progress & load ranked features """
+            inProgress.update_progress_verdict('Loading Ranked Features..\nAlmost There!!')
+            self.master.after(100, check_ranked_features_ready)  # Check when ranked features are available
+
+        def check_ranked_features_ready():
+            """ Waits until ranked_features_dicts is not None before proceeding """
+            if self.ranked_features_dicts is not None:
+                populate_loaded_features_to_selected()
+                self.master.after(200, inProgress.destroy)
+            else:
+                self.master.after(100, check_ranked_features_ready)  # Retry after 100ms
+
+        def async_wrapper(func, callback):
+            """ Runs a function in a thread & calls the callback in the main thread """
+            func()
+            self.master.after(100, callback)  # Schedule callback on the main thread
+
+        # Step 1: Check files in a separate thread & continue after completion
+        inProgress.update_progress_verdict('Checking\nXLS files..')
+        Thread(target=lambda: async_wrapper(checking_excel_files, step_2)).start()
 
 class FeatureAndAlgorithmFrame:
     def __init__(self, masterFrame: ctk.CTkFrame, my_font: ctk.CTkFont, colors: dict, 
