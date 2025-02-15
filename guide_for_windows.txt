@@ -1,0 +1,9 @@
+PS C:\Users\Administrator\Desktop\D3Lab_ctkgui\CtkGuiForD3Lab> py -0p
+ -V:3.11 *        C:\Program Files\Python311\python.exe
+ -V:3.8           C:\Program Files\Python38\python.exe
+ 
+ 
+py -3.11 -m venv p311env
+.\p311env\Scripts\activate
+
+(p311env) PS C:\Users\Administrator\Desktop\D3Lab_ctkgui\CtkGuiForD3Lab> python .\main.py
