@@ -4,7 +4,7 @@ from tkinter import filedialog, LabelFrame as tkLabelFrame
 import json
 from threading import Thread
 from util.gui.widgets import getImgPath
-from util.ml.functions import CHECK_XLS_FILES, GET_RANKED_FEATURES, KENNARD_STONE
+from util.ml.functions import CHECK_XLS_FILES, GET_RANKED_FEATURES, KENNARD_STONE, ACTIVITY_BASED_DIV
 from util.gui.widgets import CustomWarningBox, FeatureSelectEntry, InProgressWindow, CustomSuccessBox
 from data import _COMMON_PROPS
 
@@ -596,6 +596,16 @@ class DataSetDivFrame:
 
                 # ...
                 print('VALID')
+                def run_dataset_division():
+                    self.files_created = ACTIVITY_BASED_DIV(
+                        dataset_file_path = self.dataset_selected_var.get(),
+                        num_of_compounds_in_each_cluster=num_of_clusters,
+                        seed_number=seed_number,
+                        inProgress = inProgress
+                    )
+                    self.master.after(1000, update_success)
+
+                Thread(target=run_dataset_division).start()
                 
             except Exception as ex:
                 self.master.after(1000, lambda warnings=[str(ex)]: update_failure(warnings))

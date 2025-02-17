@@ -100,6 +100,41 @@ def KENNARD_STONE(dataset_file_path: str, train_samples_percent: int, inProgress
     
     return (train_xls_path, test_xls_path)
 
+def ACTIVITY_BASED_DIV(dataset_file_path: str, num_of_compounds_in_each_cluster: int, seed_number: int, inProgress: InProgressWindow):
+    inProgress.update_progress_verdict(
+        'Running Activity-Based Div.\nReading dataset...'
+    )
+    dataset_df = pd.read_excel(dataset_file_path)
+    n_samples, n_features = dataset_df.shape
+
+    df_sorted = dataset_df.sort_values(by=dataset_df.columns[-1], ascending=True).reset_index()
+    num_of_test_set_compounds = n_samples // num_of_compounds_in_each_cluster
+    test_indices = []
+    
+    inProgress.update_progress_verdict(
+        f'Running Activity-Based Div.\n{num_of_test_set_compounds}/{n_samples} Samples\nto be selected as Test...'
+    )
+    for i in range(num_of_test_set_compounds):
+        index = (seed_number - 1) + (i * num_of_compounds_in_each_cluster)
+        if index < len(df_sorted):
+            test_indices.append(df_sorted.loc[index, "index"])
+    
+    test_df = dataset_df[dataset_df.index.isin(test_indices)]
+    train_df = dataset_df[~dataset_df.index.isin(test_indices)]
+
+    inProgress.update_progress_verdict(
+            'Running Activity-Based Div,\nExporting to Train & Test datasets..'
+        )
+    CHECK_DIR('output')
+    dataset_basename = Path(dataset_file_path).stem
+    train_xls_path = os.path.join('output', f'{dataset_basename}_TRAIN.xlsx')
+    test_xls_path = os.path.join('output', f'{dataset_basename}_TEST.xlsx')
+
+    train_df.to_excel(train_xls_path, index=False)
+    test_df.to_excel(test_xls_path, index=False)
+    inProgress.update_progress_verdict('Activity-Based Div.\nDone !!')
+    
+    return (train_xls_path, test_xls_path)
 
 
 # Function to check if both files have identical column sets
