@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+from pathlib import Path
 import gc as hp_optim_gc
 from itertools import product
 from typing import Callable
@@ -23,6 +24,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, matthews_corrcoef, cohen_kappa_score, roc_auc_score
 from sklearn.metrics import confusion_matrix, classification_report, RocCurveDisplay, roc_curve
 import numpy as np
+from scipy.spatial.distance import cdist
 import matplotlib.pyplot as plt
 import plotly.io as pio
 import matplotlib
@@ -43,6 +45,62 @@ matplotlib.rcParams['font.weight'] = PLOT_PROPS['RC_PARAMS']['FONT_WEIGHT']
 def CHECK_DIR(output_dir):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
+
+# DATASET DIVISION
+def KENNARD_STONE(dataset_file_path: str, train_samples_percent: int, inProgress: InProgressWindow) -> tuple:
+    inProgress.update_progress_verdict(
+        'Running Kennard Stone\nReading dataset...'
+    )
+    dataset_df = pd.read_excel(dataset_file_path)
+    n_samples, n_features = dataset_df.shape
+    k = int(n_samples * (train_samples_percent)/100)
+
+    print(k, n_samples)
+    inProgress.update_progress_verdict(
+        f'Running Kennard Stone\n{k}/{n_samples} [{train_samples_percent}% samples]\nto be selected as Train...'
+    )
+    X = dataset_df.iloc[:,1:-1].to_numpy() # Excluding Compound Number.. and Binary
+    selected_idxs, remaining_idxs = [], list(range(n_samples))
+    mean_x = np.mean(X[remaining_idxs], axis=0)
+    dists = np.linalg.norm(X[remaining_idxs] - mean_x, axis=1)
+
+    # first index
+    first_idx = remaining_idxs[np.argmax(dists)]
+    selected_idxs.append(first_idx)
+    remaining_idxs.remove(first_idx)
+
+    for _ in range(k - 1):
+        selected_points = X[selected_idxs]
+        remaining_points = X[remaining_idxs]
+
+        dist_matrix = cdist(remaining_points, selected_points, metric='euclidean')
+        min_dists = np.min(dist_matrix, axis=1)
+        next_idx = remaining_idxs[np.argmax(min_dists)]
+
+        selected_idxs.append(next_idx)
+        remaining_idxs.remove(next_idx)
+    
+    inProgress.update_progress_verdict(
+        'Running Kennard Stone\nExporting to Train & Test datasets..'
+    )
+    selected_idxs.sort()
+    remaining_idxs.sort()
+
+    selected_df = dataset_df.iloc[selected_idxs].sort_index()
+    validation_df = dataset_df.iloc[remaining_idxs].sort_index()
+
+    CHECK_DIR('output')
+    dataset_basename = Path(dataset_file_path).stem
+    train_xls_path = os.path.join('output', f'{dataset_basename}_TRAIN.xlsx')
+    test_xls_path = os.path.join('output', f'{dataset_basename}_TEST.xlsx')
+
+    selected_df.to_excel(train_xls_path, index=False)
+    validation_df.to_excel(test_xls_path, index=False)
+    inProgress.update_progress_verdict('Done Kennard Stone !!')
+    
+    return (train_xls_path, test_xls_path)
+
+
 
 # Function to check if both files have identical column sets
 def CHECK_XLS_FILES(train_file_path: str, test_file_path: str):

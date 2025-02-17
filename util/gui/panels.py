@@ -4,7 +4,7 @@ from tkinter import filedialog, LabelFrame as tkLabelFrame
 import json
 from threading import Thread
 from util.gui.widgets import getImgPath
-from util.ml.functions import CHECK_XLS_FILES, GET_RANKED_FEATURES
+from util.ml.functions import CHECK_XLS_FILES, GET_RANKED_FEATURES, KENNARD_STONE
 from util.gui.widgets import CustomWarningBox, FeatureSelectEntry, InProgressWindow, CustomSuccessBox
 from data import _COMMON_PROPS
 
@@ -471,7 +471,7 @@ class DataSetDivFrame:
         if selection == self.methods_of_div_dict['KS']:
             self.percent_of_samples_label = ctk.CTkLabel(
                 self.method_of_div_options_frame, 
-                text="Train Split Ratio (0-100):",
+                text="Train Split Ratio (51-100):",
                 font=self.my_font
             )
             self.percent_of_samples_entry = ctk.CTkEntry(
@@ -541,12 +541,18 @@ class DataSetDivFrame:
     def submit(self):
         inProgress = InProgressWindow(self.master, self.my_font, getImgPath('dataset_div_loading.gif'))
         inProgress.create()
-
-        def update_success (processOutput: dict):
+        
+        self.files_created = None
+        def update_success():
             inProgress.destroy()
-            CustomSuccessBox(self.master, "Calculations Completed !!", self.my_font)
+            success_msg = "Calculations Completed !!"
+            if self.files_created and type(self.files_created)==tuple:
+                success_msg+=f'\nTrain: {self.files_created[0]}'
+                success_msg+=f'\nTest: {self.files_created[1]}'
+
+            CustomSuccessBox(self.master, success_msg, self.my_font)
             
-        def update_failure (warnings: list):
+        def update_failure(warnings: list):
             inProgress.destroy()
             CustomWarningBox(self.master, warnings, self.my_font)
 
@@ -562,7 +568,15 @@ class DataSetDivFrame:
                     raise Exception('Train Samples % must be a in range [51,100]')
                 # ...
                 print('VALID')
-                
+                def run_dataset_division():
+                    self.files_created = KENNARD_STONE(
+                        dataset_file_path = self.dataset_selected_var.get(),
+                        train_samples_percent = percent_of_samples,
+                        inProgress = inProgress
+                    )
+                    self.master.after(1000, update_success)
+
+                Thread(target=run_dataset_division).start()
             except Exception as ex:
                 self.master.after(1000, lambda warnings=[str(ex)]: update_failure(warnings))
                 return
