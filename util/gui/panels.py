@@ -1,10 +1,11 @@
 import customtkinter as ctk
 from PIL import Image
-from tkinter import filedialog
+from tkinter import filedialog, LabelFrame as tkLabelFrame
 import json
 from threading import Thread
+from util.gui.widgets import getImgPath
 from util.ml.functions import CHECK_XLS_FILES, GET_RANKED_FEATURES
-from util.gui.widgets import CustomWarningBox, FeatureSelectEntry, InProgressWindow
+from util.gui.widgets import CustomWarningBox, FeatureSelectEntry, InProgressWindow, CustomSuccessBox
 from data import _COMMON_PROPS
 
 class TaskPanel:
@@ -23,6 +24,8 @@ class TaskPanel:
     def _create_widgets(self) -> dict[str, ctk.CTkFrame]:
         hyperparam_optim_panel=ctk.CTkFrame(master=self.master, fg_color=self.fg_color)
         model_build_panel=ctk.CTkFrame(master=self.master, fg_color=self.fg_color)
+        dataset_div_panel=ctk.CTkFrame(master=self.master, fg_color=self.fg_color)
+        settings_panel=ctk.CTkFrame(master=self.master, fg_color=self.fg_color)
         default_panel=ctk.CTkFrame(master=self.master, fg_color=self.fg_color)
 
         # Configure responsiveness for child-panels
@@ -30,17 +33,24 @@ class TaskPanel:
         hyperparam_optim_panel.grid_rowconfigure(tuple(range(1,7)), weight=1)
         model_build_panel.grid_columnconfigure(0,weight=1)
         model_build_panel.grid_rowconfigure(tuple(range(1,7)), weight=1)
+        dataset_div_panel.grid_columnconfigure(0,weight=1)
+        dataset_div_panel.grid_rowconfigure(tuple(range(1,7)), weight=1)
+        settings_panel.grid_columnconfigure(0,weight=1)
+        settings_panel.grid_rowconfigure(tuple(range(1,7)), weight=1)
         default_panel.grid_columnconfigure(0,weight=1)
 
         default_panel_label=ctk.CTkLabel(master=default_panel,text='default_panel')
         default_panel_label.grid(row=0,column=0)
-
         hyperparam_optim_label=ctk.CTkLabel(master=hyperparam_optim_panel,text='hp_optim_panel')
         hyperparam_optim_label.grid(row=0,column=0)
         model_build_label=ctk.CTkLabel(master=model_build_panel,text='model_build_panel')
         model_build_label.grid(row=0,column=0)
+        dataset_div_label=ctk.CTkLabel(master=dataset_div_panel,text='dataset_div_panel')
+        dataset_div_label.grid(row=0,column=0)
+        settings_label=ctk.CTkLabel(master=settings_panel,text='settings_panel')
+        settings_label.grid(row=0,column=0)
 
-        return {'hp_optim': hyperparam_optim_panel, 'model_build': model_build_panel, 'default': default_panel}
+        return {'hp_optim': hyperparam_optim_panel, 'model_build': model_build_panel, 'default': default_panel, 'settings': settings_panel, 'dataset_div': dataset_div_panel}
 
     def _CONFIGURE_SIDE_PANEL_BTNS_TO_SHOW_TASK_PANEL(self, task_select_btns: dict[str, ctk.CTkButton], task_panels: dict[str, ctk.CTkFrame]):
         '''Configures task_select_btns [from side-panel] to SHOW_FRAME(..) their respective panels'''
@@ -76,7 +86,7 @@ class SidePanel:
             master=self.master,
             fg_color=self.colors['fg']
         )
-        self.side_panel.grid(row=2,column=0,rowspan=9,sticky=ctk.NSEW,padx=(5,2),pady=5)
+        self.side_panel.grid(row=2,column=0,rowspan=12,sticky=ctk.NSEW,padx=(5,2),pady=5)
         self.task_panel_btns = self.create_widgets() # Initialize components
 
     def create_widgets(self) -> dict[str, ctk.CTkButton]:
@@ -87,6 +97,10 @@ class SidePanel:
         model_build_img = ctk.CTkImage(
             light_image=Image.open(self.img_pathsAndSizes['model_build']['path']), 
             size=self.img_pathsAndSizes['model_build']['size']
+        )
+        dataset_div_img = ctk.CTkImage(
+            light_image=Image.open(self.img_pathsAndSizes['dataset_div']['path']), 
+            size=self.img_pathsAndSizes['dataset_div']['size']
         )
         settings_img = ctk.CTkImage(
             light_image=Image.open(self.img_pathsAndSizes['settings']['path']), 
@@ -103,6 +117,11 @@ class SidePanel:
             btn_image=model_build_img,
             BTN_COLORS=self.colors['btns']['model_build']
         )
+        dataset_div_btn = self.create_panelSelectionButton (
+            btn_text="DATASET\nDIVISION", 
+            btn_image=dataset_div_img,
+            BTN_COLORS=self.colors['btns']['dataset_div']
+        )
         settings_btn = self.create_panelSelectionButton (
             btn_text="SETTINGS", 
             btn_image=settings_img,
@@ -111,9 +130,10 @@ class SidePanel:
     
         hyperparam_optim_btn.grid(row=0,column=0,rowspan=3,sticky=ctk.NSEW, padx=10,pady=5)
         model_build_btn.grid(row=3,column=0,rowspan=3,sticky=ctk.NSEW, padx=10,pady=5)
-        settings_btn.grid(row=6,column=0,rowspan=3,sticky=ctk.NSEW, padx=10,pady=5)
+        dataset_div_btn.grid(row=6,column=0,rowspan=3,sticky=ctk.NSEW, padx=10,pady=5)
+        settings_btn.grid(row=9,column=0,rowspan=3,sticky=ctk.NSEW, padx=10,pady=5)
 
-        return {'hp_optim': hyperparam_optim_btn, 'model_build': model_build_btn}
+        return {'hp_optim': hyperparam_optim_btn, 'model_build': model_build_btn, 'dataset_div':dataset_div_btn, 'settings': settings_btn}
     
     def GET_SELECT_TASK_BTNS (self) -> dict:
         return self.task_panel_btns
@@ -248,8 +268,7 @@ class DataSetPanel:
     def validate_train_test_files(self):
         if not self.train_entryVar.get() or not self.test_entryVar.get():
             return
-        
-        from util.gui.widgets import getImgPath 
+         
         inProgress = InProgressWindow(self.master, self.my_font, getImgPath("check_files.gif"))
         inProgress.create()
         self.ranked_features_dicts = None
@@ -361,3 +380,282 @@ class FeatureAndAlgorithmFrame:
     # algo_dropdown needed later to configure the show_frames() function
     def _get_algorithm_optionmenu (self):
         return self.algo_dropdown
+    
+class DataSetDivFrame:
+    def __init__(self, masterFrame: ctk.CTkFrame, my_font: ctk.CTkFont, colors: dict, img_pathsAndSizes: dict):
+        self.master = masterFrame
+        self.my_font = my_font
+        self.colors = colors
+        self.img_pathsAndSizes = img_pathsAndSizes
+        self.methods_of_div_dict = {
+            'KS': 'Kennard Stone', 
+            'RANDOM':'Random Split', 
+            'ACTIVITY': 'Activity-Based'
+        }
+        # VARIABLES
+        self.dataset_selected_var = ctk.StringVar()
+        self.method_of_div_var = ctk.StringVar(value=self.methods_of_div_dict['KS'])
+        self.percent_of_samples_var = ctk.IntVar(value=80)
+        self.seed_number_var = ctk.IntVar(value=3)
+        self.num_of_clusters_var = ctk.IntVar(value=5)
+
+        self.dataset_div_mainFrame = self._get_labelframe(self.master, 'Dataset_division')
+        self.dataset_div_mainFrame.grid_columnconfigure(tuple(range(7)), weight=1)
+        #self.dataset_div_mainFrame.grid_rowconfigure(1, weight=1) # Results
+        self.dataset_div_mainFrame.grid(row=0, column=0, padx=30, pady=30, sticky=ctk.NSEW)
+
+        # DATASET SELECT ENTRY
+        self.dataset_select_label = ctk.CTkLabel(
+            master=self.dataset_div_mainFrame, text='SELECT DATASET:', font=self.my_font
+        )
+        self.dataset_select_entry = self.create_entry(self.dataset_selected_var)
+        self.dataset_select_btn = self.create_upload_button()
+
+        self.dataset_select_label.grid(row=0, column=0, columnspan=1, padx=5, pady=5, sticky=ctk.EW)
+        self.dataset_select_entry.grid(row=0, column=1, columnspan=4, padx=5, pady=5, sticky=ctk.EW)
+        self.dataset_select_btn.grid(row=0, column=5, columnspan=1, padx=5, pady=5, sticky=ctk.EW)
+
+        # METHOD OF DIV.
+        self.method_of_div_label = ctk.CTkLabel(
+            master=self.dataset_div_mainFrame, text="METHOD of DIV:", font=self.my_font
+        )
+        self.method_of_div_menu = ctk.CTkOptionMenu(
+            master=self.dataset_div_mainFrame, 
+            variable=self.method_of_div_var,
+            values=list(self.methods_of_div_dict.values()),
+            command=self.load_options,
+            font=self.my_font,
+            dropdown_font=self.my_font,
+            corner_radius=0,
+            anchor=ctk.CENTER,
+            button_color=self.colors['optionmenu']['fg'],
+            button_hover_color=self.colors['optionmenu']['hover'],
+            fg_color=self.colors['optionmenu']['fg']    
+        )
+
+        self.method_of_div_label.grid(row=1, column=0, columnspan=1, padx=5, pady=5, sticky=ctk.EW)
+        self.method_of_div_menu.grid(row=1, column=1, columnspan=6, padx=5, pady=5, sticky=ctk.EW)
+        
+        # DYNAMIC OPTION FRAME [BASED on METHOD_OF_DIV]
+        self.method_of_div_options_frame = ctk.CTkFrame(
+            master=self.dataset_div_mainFrame,
+            fg_color=self.colors['fg'],
+        )
+        self.method_of_div_options_frame.grid_columnconfigure((0,1), weight=1)
+        self.method_of_div_options_frame.grid(row=2, column=0, columnspan=7, padx=5, pady=5, sticky=ctk.EW)
+
+        # >>> OPTIONS
+        self.load_options(self.method_of_div_var.get())
+
+        # SUBMIT
+        self.submit_btn = ctk.CTkButton(
+            master=self.dataset_div_mainFrame,
+            text='Submit',
+            font=self.my_font,
+            fg_color=self.colors['btn']['fg'],
+            hover_color=self.colors['btn']['hover'],
+            text_color='white',
+            corner_radius=0,
+            width=200,
+            border_spacing=0,
+            command=self.submit
+        )  
+        self.submit_btn.grid(row=3, column=0, columnspan=7, padx=25, pady=5)
+
+    def load_options(self, selection):
+        # Clear previous widgets
+        if self.method_of_div_options_frame.winfo_children():
+            for widget in self.method_of_div_options_frame.winfo_children():
+                widget.destroy()
+        
+        if selection == self.methods_of_div_dict['KS']:
+            self.percent_of_samples_label = ctk.CTkLabel(
+                self.method_of_div_options_frame, 
+                text="Train Split Ratio (0-100):",
+                font=self.my_font
+            )
+            self.percent_of_samples_entry = ctk.CTkEntry(
+                master=self.method_of_div_options_frame,
+                textvariable=self.percent_of_samples_var,
+                border_width=0,
+                corner_radius=0,
+                font=self.my_font
+            )
+            self.percent_of_samples_label.grid(row=0, column=0, padx=5, pady=5, sticky=ctk.E)
+            self.percent_of_samples_entry.grid(row=0, column=1, padx=5, pady=5, sticky=ctk.W)
+        
+        elif selection == self.methods_of_div_dict['RANDOM']:
+            self.percent_of_samples_label = ctk.CTkLabel(
+                self.method_of_div_options_frame, text="Train Split Ratio (51-100):", font=self.my_font
+            )
+            self.percent_of_samples_entry = ctk.CTkEntry(
+                master=self.method_of_div_options_frame,
+                textvariable=self.percent_of_samples_var,
+                border_width=0,
+                corner_radius=0,
+                font=self.my_font
+            )
+            self.seed_number_label = ctk.CTkLabel(
+                self.method_of_div_options_frame, text="Seed Number (1-20):", font=self.my_font
+            )
+            self.seed_number_entry = ctk.CTkEntry(
+                master=self.method_of_div_options_frame,
+                textvariable=self.seed_number_var,
+                border_width=0,
+                corner_radius=0,
+                font=self.my_font
+            )
+
+            self.percent_of_samples_label.grid(row=0, column=0, padx=5, pady=5, sticky=ctk.E)
+            self.percent_of_samples_entry.grid(row=0, column=1, padx=5, pady=5, sticky=ctk.W)
+            self.seed_number_label.grid(row=1, column=0, padx=5, pady=5, sticky=ctk.E)
+            self.seed_number_entry.grid(row=1, column=1, padx=5, pady=5, sticky=ctk.W)
+        
+        elif selection == self.methods_of_div_dict['ACTIVITY']:
+            self.seed_number_label = ctk.CTkLabel(
+                self.method_of_div_options_frame, text="Seed Number (1-20):", font=self.my_font
+            )
+            self.seed_number_entry = ctk.CTkEntry(
+                master=self.method_of_div_options_frame,
+                textvariable=self.seed_number_var,
+                border_width=0,
+                corner_radius=0,
+                font=self.my_font
+            )
+            self.num_of_clusters_label = ctk.CTkLabel(
+                self.method_of_div_options_frame, text="Num of Clusters (1-20):", font=self.my_font
+            )
+            self.num_of_clusters_entry = ctk.CTkEntry(
+                master=self.method_of_div_options_frame,
+                textvariable=self.num_of_clusters_var,
+                border_width=0,
+                corner_radius=0,
+                font=self.my_font
+            )
+
+            self.num_of_clusters_label.grid(row=0, column=0, padx=5, pady=5, sticky=ctk.E)
+            self.num_of_clusters_entry.grid(row=0, column=1, padx=5, pady=5, sticky=ctk.W)
+            self.seed_number_label.grid(row=1, column=0, padx=5, pady=5, sticky=ctk.E)
+            self.seed_number_entry.grid(row=1, column=1, padx=5, pady=5, sticky=ctk.W)
+
+    def submit(self):
+        inProgress = InProgressWindow(self.master, self.my_font, getImgPath('dataset_div_loading.gif'))
+        inProgress.create()
+
+        def update_success (processOutput: dict):
+            inProgress.destroy()
+            CustomSuccessBox(self.master, "Calculations Completed !!", self.my_font)
+            
+        def update_failure (warnings: list):
+            inProgress.destroy()
+            CustomWarningBox(self.master, warnings, self.my_font)
+
+        if not self.dataset_selected_var.get():
+            self.master.after(1000, lambda warnings=['No DATASET selected !!']: update_failure(warnings))
+            return
+        
+        dataset_div_method_selected = self.method_of_div_var.get()
+        if dataset_div_method_selected == self.methods_of_div_dict['KS']:
+            try:
+                percent_of_samples = int(self.percent_of_samples_var.get())
+                if not 51<percent_of_samples<=100:
+                    raise Exception('Train Samples % must be a in range [51,100]')
+                # ...
+                print('VALID')
+                
+            except Exception as ex:
+                self.master.after(1000, lambda warnings=[str(ex)]: update_failure(warnings))
+                return
+            
+        elif dataset_div_method_selected == self.methods_of_div_dict['ACTIVITY']:
+            try:
+                num_of_clusters = int(self.num_of_clusters_var.get())
+                if not 0<num_of_clusters<=20:
+                    raise Exception('Num Of Clusters must be a in range [1,20]')
+                
+                seed_number = int(self.seed_number_var.get())
+                if not 0<seed_number<=20:
+                    raise Exception('Seed Number must be a in range [1,20]')
+                
+                if seed_number>num_of_clusters:
+                    raise Exception('Seed Number must be smaller than Number of Clusters')
+
+                # ...
+                print('VALID')
+                
+            except Exception as ex:
+                self.master.after(1000, lambda warnings=[str(ex)]: update_failure(warnings))
+                return
+        elif dataset_div_method_selected == self.methods_of_div_dict['RANDOM']:
+            try:
+                percent_of_samples = int(self.percent_of_samples_var.get())
+                if not 51<percent_of_samples<=100:
+                    raise Exception('Train Samples % must be a in range [51,100]')
+                
+                seed_number = int(self.seed_number_var.get())
+                if not 0<seed_number<=20:
+                    raise Exception('Seed Number must be a in range [1,20]')
+                # ...
+                print('VALID')
+                
+            except Exception as ex:
+                self.master.after(1000, lambda warnings=[str(ex)]: update_failure(warnings))
+                return
+        else:
+            self.master.after(1000, lambda warnings=[f'Invalid Method: {dataset_div_method_selected} !!']: update_failure(warnings))
+            return
+
+
+    def create_entry(self, entry_var):
+        entry = ctk.CTkEntry(
+            master=self.dataset_div_mainFrame,
+            textvariable=entry_var,
+            border_width=0,
+            corner_radius=0,
+            width=300,
+            font=self.my_font
+        )
+        entry.bind('<FocusIn>', self.on_focus_in)
+        entry.bind('<FocusOut>', self.on_focus_out)
+        return entry
+
+    def create_upload_button(self):
+        upload_img = ctk.CTkImage(
+            light_image=Image.open(self.img_pathsAndSizes['upload']['path']), 
+            size=self.img_pathsAndSizes['upload']['size']
+        )
+        button = ctk.CTkButton(
+            master=self.dataset_div_mainFrame,
+            text='Upload',
+            compound='left',
+            image=upload_img,
+            font=self.my_font,
+            fg_color=self.colors['btn']['fg'],
+            hover_color=self.colors['btn']['hover'],
+            text_color='white',
+            corner_radius=0,
+            width=100,
+            border_spacing=0,
+            command=self.load_file
+        )
+        return button
+    
+    def load_file(self):
+        file_path = filedialog.askopenfilename(
+            title=f"Select a Dataset to Divide",
+            filetypes=[("Excel Files", "*.xls"), ("Excel Files", "*.xlsx")]
+        )
+        if file_path:
+            self.dataset_selected_var.set(file_path)
+    
+    def on_focus_in(self):
+        self.dataset_select_entry.configure(border_color="#111")
+
+    def on_focus_out(self):
+        self.dataset_select_entry.configure(border_color="#bbb")
+
+    def _get_labelframe (self, master_frame: ctk.CTkFrame, label_txt: str):
+        return tkLabelFrame(
+            master=master_frame, text=label_txt, font=self.my_font, 
+            labelanchor=ctk.NW, background=self.colors['fg']
+        )

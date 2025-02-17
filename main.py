@@ -12,7 +12,7 @@ ctk.set_appearance_mode(CONFIG_DATA["settings"]["appearence_mode"])
 
 root=ctk.CTk()
 root.title(CONFIG_DATA["app_name"])
-#root.resizable(False, False)
+root.resizable(False, False)
 root.focus_force()
 root.grid_columnconfigure(tuple(range(1,8)), weight=1) # 8 columns
 root.grid_rowconfigure(tuple(range(2,11)),weight=1) # Only Side_panel and task_panel will expand
@@ -40,6 +40,9 @@ HP_OPTIM_IMG = {
 }
 MODEL_BUILD_IMG = {
     'PATH': os.path.join('images', 'model_build.png'), 'SIZE': (40,40)
+}
+DATASET_DIV_IMG = {
+    'PATH': os.path.join('images', 'dataset_division.png'), 'SIZE': (40,40)
 }
 SETTINGS_IMG = {
     'PATH': os.path.join('images', 'settings.png'), 'SIZE': (30,30)
@@ -122,12 +125,14 @@ side_panel = SidePanel(
         'btns': {
             'hp_optim': {'fg': COLORS['LIGHTRED_FG'], 'hover': COLORS['LIGHTRED_HOVER_FG']}, 
             'model_build': { 'fg': COLORS['MEDIUMGREEN_FG'], 'hover': COLORS['MEDIUMGREEN_HOVER_FG']},
+            'dataset_div': { 'fg': '#c96202', 'hover': '#e67002'},
             'settings': { 'fg': '#728FCE', 'hover': '#86A3E2'}
         }
     },
     img_pathsAndSizes={
         'hp_optim': {'path': HP_OPTIM_IMG['PATH'], 'size': HP_OPTIM_IMG['SIZE']}, 
         'model_build': {'path': MODEL_BUILD_IMG['PATH'], 'size': MODEL_BUILD_IMG['SIZE']},
+        'dataset_div': {'path': DATASET_DIV_IMG['PATH'], 'size': DATASET_DIV_IMG['SIZE']},
         'settings': {'path': SETTINGS_IMG['PATH'], 'size': SETTINGS_IMG['SIZE']},
     }
 )
@@ -140,7 +145,23 @@ task_panel = TaskPanel(
     taskSelectBtns_fromSidePanel=taskSelectBtns
 )
 taskPanelMap = task_panel._get_task_panels()
+print(taskPanelMap.keys())
 # {'hp_optim': hyperparam_optim_panel, 'model_build': model_build_panel, 'default': default_panel}
+
+# DATASET DIVISION PANEL ----------------------
+dataset_div_panel = taskPanelMap['dataset_div']
+DataSetDivFrame(
+    masterFrame=dataset_div_panel,
+    my_font=MY_FONT_1,
+    colors={
+        'fg': COLORS['SKYBLUE_FG'], 
+        'btn': {'fg': COLORS['MEDIUMGREEN_FG'], 'hover': COLORS['MEDIUMGREEN_HOVER_FG']},
+        'optionmenu': {'fg': COLORS['GREY_FG'], 'hover': COLORS['GREY_HOVER_FG']},
+    },
+    img_pathsAndSizes={ 
+        'upload': {'path': UPLOAD_IMG['PATH'], 'size': UPLOAD_IMG['SIZE']}
+    }
+)
 
 # HP_OPTIM_PANEL------------------------------------------------------------------------------------------
 hyperparam_optim_panel = taskPanelMap['hp_optim']

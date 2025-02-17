@@ -181,14 +181,14 @@ class ModelBuild_AlgoLabelFrame:
         self.algo_model_build_func_onSubmit = algoValueInMap['algo_model_build_func'] # Call this func in the submit along with lambda and arguments
     
         self.algo_labelFrame = self._get_labelframe(master_panel, algoValueInMap['algo_name'])
-        self.algo_labelFrame.grid_columnconfigure(0, weight=1)
+        self.algo_labelFrame.grid_columnconfigure(tuple(range(9)), weight=1)
         self.algo_labelFrame.grid_rowconfigure(1, weight=1) # Results
 
         self.algo_hp_optim = self._get_labelframe(self.algo_labelFrame, 'HyperParameters')
         self.algo_results = self._get_labelframe(self.algo_labelFrame, 'Results')
 
-        self.algo_hp_optim.grid(row=0,column=0,columnspan=1,padx=5,pady=2,sticky=ctk.NSEW)
-        self.algo_results.grid(row=1,column=0,columnspan=1,padx=5,pady=2,sticky=ctk.NSEW)
+        self.algo_hp_optim.grid(row=0, column=0, columnspan=9, padx=5,pady=2,sticky=ctk.NSEW)
+        self.algo_results.grid(row=1, column=0, columnspan=9, padx=5,pady=2,sticky=ctk.NSEW)
 
         self.algo_inputs = {'FEATURES':SELECTED_FEATURES}
         self._CREATE_MODEL_BUILD_FIELDS(self._DATA['model_build_field_configs'])
