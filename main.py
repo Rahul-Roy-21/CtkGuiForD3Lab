@@ -145,7 +145,6 @@ task_panel = TaskPanel(
     taskSelectBtns_fromSidePanel=taskSelectBtns
 )
 taskPanelMap = task_panel._get_task_panels()
-print(taskPanelMap.keys())
 # {'hp_optim': hyperparam_optim_panel, 'model_build': model_build_panel, 'default': default_panel}
 
 # DATASET DIVISION PANEL ----------------------

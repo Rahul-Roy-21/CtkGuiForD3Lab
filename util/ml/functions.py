@@ -20,7 +20,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, matthews_corrcoef, cohen_kappa_score, roc_auc_score
 from sklearn.metrics import confusion_matrix, classification_report, RocCurveDisplay, roc_curve
 import numpy as np
@@ -91,8 +91,8 @@ def KENNARD_STONE(dataset_file_path: str, train_samples_percent: int, inProgress
 
     CHECK_DIR('output')
     dataset_basename = Path(dataset_file_path).stem
-    train_xls_path = os.path.join('output', f'{dataset_basename}_TRAIN.xlsx')
-    test_xls_path = os.path.join('output', f'{dataset_basename}_TEST.xlsx')
+    train_xls_path = os.path.join('output', f'{dataset_basename}_TRAIN_KennardStone.xlsx')
+    test_xls_path = os.path.join('output', f'{dataset_basename}_TEST_KennardStone.xlsx')
 
     selected_df.to_excel(train_xls_path, index=False)
     validation_df.to_excel(test_xls_path, index=False)
@@ -127,8 +127,8 @@ def ACTIVITY_BASED_DIV(dataset_file_path: str, num_of_compounds_in_each_cluster:
         )
     CHECK_DIR('output')
     dataset_basename = Path(dataset_file_path).stem
-    train_xls_path = os.path.join('output', f'{dataset_basename}_TRAIN.xlsx')
-    test_xls_path = os.path.join('output', f'{dataset_basename}_TEST.xlsx')
+    train_xls_path = os.path.join('output', f'{dataset_basename}_TRAIN_ActivityBasedDiv.xlsx')
+    test_xls_path = os.path.join('output', f'{dataset_basename}_TEST_ActivityBasedDiv.xlsx')
 
     train_df.to_excel(train_xls_path, index=False)
     test_df.to_excel(test_xls_path, index=False)
@@ -136,6 +136,31 @@ def ACTIVITY_BASED_DIV(dataset_file_path: str, num_of_compounds_in_each_cluster:
     
     return (train_xls_path, test_xls_path)
 
+def RANDOM_DIV(dataset_file_path: str, train_samples_percent: int, seed_number: int, inProgress: InProgressWindow):
+    inProgress.update_progress_verdict(
+        'Running Random Division\nReading dataset...'
+    )
+    dataset_df = pd.read_excel(dataset_file_path)
+    test_sample_percent = 100 - train_samples_percent
+    test_size = test_sample_percent / 100
+    inProgress.update_progress_verdict(
+        f'Running Random Division\n{train_samples_percent}-{test_sample_percent} Split\nfor Train/Test ...'
+    )
+    train_set, test_set = train_test_split(dataset_df, test_size=test_size, random_state=seed_number)
+    inProgress.update_progress_verdict(
+        'Running Random Division\nExporting to Train & Test datasets..'
+    )
+
+    CHECK_DIR('output')
+    dataset_basename = Path(dataset_file_path).stem
+    train_xls_path = os.path.join('output', f'{dataset_basename}_TRAIN_RandomDiv.xlsx')
+    test_xls_path = os.path.join('output', f'{dataset_basename}_TEST_RandomDiv.xlsx')
+
+    train_set.to_excel(train_xls_path, index=False)
+    test_set.to_excel(test_xls_path, index=False)
+    inProgress.update_progress_verdict('Done Random Division !!')
+    
+    return (train_xls_path, test_xls_path)
 
 # Function to check if both files have identical column sets
 def CHECK_XLS_FILES(train_file_path: str, test_file_path: str):

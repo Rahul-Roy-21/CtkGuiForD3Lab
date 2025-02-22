@@ -4,7 +4,7 @@ from tkinter import filedialog, LabelFrame as tkLabelFrame
 import json
 from threading import Thread
 from util.gui.widgets import getImgPath
-from util.ml.functions import CHECK_XLS_FILES, GET_RANKED_FEATURES, KENNARD_STONE, ACTIVITY_BASED_DIV
+from util.ml.functions import CHECK_XLS_FILES, GET_RANKED_FEATURES, KENNARD_STONE, ACTIVITY_BASED_DIV, RANDOM_DIV
 from util.gui.widgets import CustomWarningBox, FeatureSelectEntry, InProgressWindow, CustomSuccessBox
 from data import _COMMON_PROPS
 
@@ -397,7 +397,7 @@ class DataSetDivFrame:
         self.method_of_div_var = ctk.StringVar(value=self.methods_of_div_dict['KS'])
         self.percent_of_samples_var = ctk.IntVar(value=80)
         self.seed_number_var = ctk.IntVar(value=3)
-        self.num_of_clusters_var = ctk.IntVar(value=5)
+        self.num_of_samples_per_cluster_var = ctk.IntVar(value=5)
 
         self.dataset_div_mainFrame = self._get_labelframe(self.master, 'Dataset_division')
         self.dataset_div_mainFrame.grid_columnconfigure(tuple(range(7)), weight=1)
@@ -471,7 +471,7 @@ class DataSetDivFrame:
         if selection == self.methods_of_div_dict['KS']:
             self.percent_of_samples_label = ctk.CTkLabel(
                 self.method_of_div_options_frame, 
-                text="Train Split Ratio (51-100):",
+                text="% of Train Samples (51-95):",
                 font=self.my_font
             )
             self.percent_of_samples_entry = ctk.CTkEntry(
@@ -485,8 +485,10 @@ class DataSetDivFrame:
             self.percent_of_samples_entry.grid(row=0, column=1, padx=5, pady=5, sticky=ctk.W)
         
         elif selection == self.methods_of_div_dict['RANDOM']:
+            self.seed_number_var.set(value=42)
+
             self.percent_of_samples_label = ctk.CTkLabel(
-                self.method_of_div_options_frame, text="Train Split Ratio (51-100):", font=self.my_font
+                self.method_of_div_options_frame, text="% of Train Samples (51-95):", font=self.my_font
             )
             self.percent_of_samples_entry = ctk.CTkEntry(
                 master=self.method_of_div_options_frame,
@@ -496,7 +498,7 @@ class DataSetDivFrame:
                 font=self.my_font
             )
             self.seed_number_label = ctk.CTkLabel(
-                self.method_of_div_options_frame, text="Seed Number (1-20):", font=self.my_font
+                self.method_of_div_options_frame, text="Seed Number:", font=self.my_font
             )
             self.seed_number_entry = ctk.CTkEntry(
                 master=self.method_of_div_options_frame,
@@ -512,8 +514,11 @@ class DataSetDivFrame:
             self.seed_number_entry.grid(row=1, column=1, padx=5, pady=5, sticky=ctk.W)
         
         elif selection == self.methods_of_div_dict['ACTIVITY']:
+            self.num_of_samples_per_cluster_var.set(value=5)
+            self.seed_number_var.set(value=3)
+
             self.seed_number_label = ctk.CTkLabel(
-                self.method_of_div_options_frame, text="Seed Number (1-20):", font=self.my_font
+                self.method_of_div_options_frame, text="Seed Number :", font=self.my_font
             )
             self.seed_number_entry = ctk.CTkEntry(
                 master=self.method_of_div_options_frame,
@@ -522,19 +527,19 @@ class DataSetDivFrame:
                 corner_radius=0,
                 font=self.my_font
             )
-            self.num_of_clusters_label = ctk.CTkLabel(
-                self.method_of_div_options_frame, text="Num of Clusters (1-20):", font=self.my_font
+            self.num_of_samples_per_cluster_label = ctk.CTkLabel(
+                self.method_of_div_options_frame, text="Num of Samples per Cluster :", font=self.my_font
             )
-            self.num_of_clusters_entry = ctk.CTkEntry(
+            self.num_of_samples_per_cluster_entry = ctk.CTkEntry(
                 master=self.method_of_div_options_frame,
-                textvariable=self.num_of_clusters_var,
+                textvariable=self.num_of_samples_per_cluster_var,
                 border_width=0,
                 corner_radius=0,
                 font=self.my_font
             )
 
-            self.num_of_clusters_label.grid(row=0, column=0, padx=5, pady=5, sticky=ctk.E)
-            self.num_of_clusters_entry.grid(row=0, column=1, padx=5, pady=5, sticky=ctk.W)
+            self.num_of_samples_per_cluster_label.grid(row=0, column=0, padx=5, pady=5, sticky=ctk.E)
+            self.num_of_samples_per_cluster_entry.grid(row=0, column=1, padx=5, pady=5, sticky=ctk.W)
             self.seed_number_label.grid(row=1, column=0, padx=5, pady=5, sticky=ctk.E)
             self.seed_number_entry.grid(row=1, column=1, padx=5, pady=5, sticky=ctk.W)
 
@@ -564,8 +569,8 @@ class DataSetDivFrame:
         if dataset_div_method_selected == self.methods_of_div_dict['KS']:
             try:
                 percent_of_samples = int(self.percent_of_samples_var.get())
-                if not 51<percent_of_samples<=100:
-                    raise Exception('Train Samples % must be a in range [51,100]')
+                if not 51<percent_of_samples<=95:
+                    raise Exception('Train Samples % must be a in range [51,95]')
                 # ...
                 print('VALID')
                 def run_dataset_division():
@@ -583,23 +588,19 @@ class DataSetDivFrame:
             
         elif dataset_div_method_selected == self.methods_of_div_dict['ACTIVITY']:
             try:
-                num_of_clusters = int(self.num_of_clusters_var.get())
-                if not 0<num_of_clusters<=20:
-                    raise Exception('Num Of Clusters must be a in range [1,20]')
+                num_of_samples_per_cluster = int(self.num_of_samples_per_cluster_var.get())
+                if not 0<num_of_samples_per_cluster<=100:
+                    raise Exception('Num Of Samples per Cluster must be a in range [1,100]')
                 
                 seed_number = int(self.seed_number_var.get())
-                if not 0<seed_number<=20:
-                    raise Exception('Seed Number must be a in range [1,20]')
+                if not 0<seed_number<=num_of_samples_per_cluster:
+                    raise Exception(f'Seed Number must be a in range [1,{num_of_samples_per_cluster}]')
                 
-                if seed_number>num_of_clusters:
-                    raise Exception('Seed Number must be smaller than Number of Clusters')
-
-                # ...
                 print('VALID')
                 def run_dataset_division():
                     self.files_created = ACTIVITY_BASED_DIV(
                         dataset_file_path = self.dataset_selected_var.get(),
-                        num_of_compounds_in_each_cluster=num_of_clusters,
+                        num_of_compounds_in_each_cluster=num_of_samples_per_cluster,
                         seed_number=seed_number,
                         inProgress = inProgress
                     )
@@ -610,17 +611,28 @@ class DataSetDivFrame:
             except Exception as ex:
                 self.master.after(1000, lambda warnings=[str(ex)]: update_failure(warnings))
                 return
+            
         elif dataset_div_method_selected == self.methods_of_div_dict['RANDOM']:
             try:
                 percent_of_samples = int(self.percent_of_samples_var.get())
-                if not 51<percent_of_samples<=100:
-                    raise Exception('Train Samples % must be a in range [51,100]')
+                if not 51<percent_of_samples<=95:
+                    raise Exception('Train Samples % must be a in range [51,95]')
                 
                 seed_number = int(self.seed_number_var.get())
-                if not 0<seed_number<=20:
-                    raise Exception('Seed Number must be a in range [1,20]')
+                if not 0<seed_number<=100:
+                    raise Exception('Seed Number must be a in range [1,100]')
                 # ...
                 print('VALID')
+                def run_dataset_division():
+                    self.files_created = RANDOM_DIV(
+                        dataset_file_path = self.dataset_selected_var.get(),
+                        train_samples_percent=percent_of_samples,
+                        seed_number=seed_number,
+                        inProgress = inProgress
+                    )
+                    self.master.after(1000, update_success)
+
+                Thread(target=run_dataset_division).start()
                 
             except Exception as ex:
                 self.master.after(1000, lambda warnings=[str(ex)]: update_failure(warnings))
