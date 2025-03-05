@@ -28,14 +28,15 @@ from scipy.spatial.distance import cdist
 import matplotlib.pyplot as plt
 import plotly.io as pio
 import matplotlib
-from data import DATA, _COMMON_PROPS
+from constants import my_config_manager, OUT_DIR
+#from data import DATA, _COMMON_PROPS
 from json import dumps as jsonDumps
 from util.gui.widgets import InProgressWindow
 
 matplotlib.use('Agg')
 
-PLOT_PROPS = DATA['plot_properties']
-OPTUNA_TOTAL_TRIALS = _COMMON_PROPS['hp_optim']['optuna_total_trials']
+PLOT_PROPS = my_config_manager.get('plot_properties')
+OPTUNA_TOTAL_TRIALS = my_config_manager.get('optuna.total_trials')
 
 # Set global font properties
 matplotlib.rcParams['font.family'] = PLOT_PROPS['RC_PARAMS']['FONT_STYLE']
@@ -89,10 +90,10 @@ def KENNARD_STONE(dataset_file_path: str, train_samples_percent: int, inProgress
     selected_df = dataset_df.iloc[selected_idxs].sort_index()
     validation_df = dataset_df.iloc[remaining_idxs].sort_index()
 
-    CHECK_DIR('output')
+    CHECK_DIR(OUT_DIR)
     dataset_basename = Path(dataset_file_path).stem
-    train_xls_path = os.path.join('output', f'{dataset_basename}_TRAIN_KennardStone.xlsx')
-    test_xls_path = os.path.join('output', f'{dataset_basename}_TEST_KennardStone.xlsx')
+    train_xls_path = os.path.join(OUT_DIR, f'{dataset_basename}_TRAIN_KennardStone.xlsx')
+    test_xls_path = os.path.join(OUT_DIR, f'{dataset_basename}_TEST_KennardStone.xlsx')
 
     selected_df.to_excel(train_xls_path, index=False)
     validation_df.to_excel(test_xls_path, index=False)
@@ -125,10 +126,10 @@ def ACTIVITY_BASED_DIV(dataset_file_path: str, num_of_compounds_in_each_cluster:
     inProgress.update_progress_verdict(
             'Running Activity-Based Div,\nExporting to Train & Test datasets..'
         )
-    CHECK_DIR('output')
+    CHECK_DIR(OUT_DIR)
     dataset_basename = Path(dataset_file_path).stem
-    train_xls_path = os.path.join('output', f'{dataset_basename}_TRAIN_ActivityBasedDiv.xlsx')
-    test_xls_path = os.path.join('output', f'{dataset_basename}_TEST_ActivityBasedDiv.xlsx')
+    train_xls_path = os.path.join(OUT_DIR, f'{dataset_basename}_TRAIN_ActivityBasedDiv.xlsx')
+    test_xls_path = os.path.join(OUT_DIR, f'{dataset_basename}_TEST_ActivityBasedDiv.xlsx')
 
     train_df.to_excel(train_xls_path, index=False)
     test_df.to_excel(test_xls_path, index=False)
@@ -151,10 +152,10 @@ def RANDOM_DIV(dataset_file_path: str, train_samples_percent: int, seed_number: 
         'Running Random Division\nExporting to Train & Test datasets..'
     )
 
-    CHECK_DIR('output')
+    CHECK_DIR(OUT_DIR)
     dataset_basename = Path(dataset_file_path).stem
-    train_xls_path = os.path.join('output', f'{dataset_basename}_TRAIN_RandomDiv.xlsx')
-    test_xls_path = os.path.join('output', f'{dataset_basename}_TEST_RandomDiv.xlsx')
+    train_xls_path = os.path.join(OUT_DIR, f'{dataset_basename}_TRAIN_RandomDiv.xlsx')
+    test_xls_path = os.path.join(OUT_DIR, f'{dataset_basename}_TEST_RandomDiv.xlsx')
 
     train_set.to_excel(train_xls_path, index=False)
     test_set.to_excel(test_xls_path, index=False)
@@ -211,7 +212,7 @@ def GET_RANKED_FEATURES(train_file_path: str) -> list[dict]:
     - For MIS [Mutual Information Score]: 
         - {Rank: 1, Feature: f1, MIS: 0.032323}
     """
-    FEATURE_RANKING_METHOD = _COMMON_PROPS['feature_selection']['ranking_method']
+    FEATURE_RANKING_METHOD = my_config_manager.get('feature_selection.ranking_method')
     df = pd.read_excel(train_file_path)
     
     if FEATURE_RANKING_METHOD=='MDF':
@@ -253,9 +254,9 @@ def GET_RANKED_FEATURES(train_file_path: str) -> list[dict]:
         print('ranked_features_dict: ', ranked_features_dict)
 
         # Export in xls
-        CHECK_DIR('output')
+        CHECK_DIR(OUT_DIR)
         ranking.set_index('Rank').reset_index().to_excel(
-            excel_writer=os.path.join('output', 'MDF.xlsx'), 
+            excel_writer=os.path.join(OUT_DIR, 'MDF.xlsx'), 
             index=False
         )
 
@@ -281,9 +282,9 @@ def GET_RANKED_FEATURES(train_file_path: str) -> list[dict]:
         print('ranked_features_dict: ', ranked_features_dict)
 
         # Export in xls
-        CHECK_DIR('output')
+        CHECK_DIR(OUT_DIR)
         mi_results.set_index('Rank').reset_index().to_excel(
-            excel_writer=os.path.join('output', 'MIS.xlsx'), 
+            excel_writer=os.path.join(OUT_DIR, 'MIS.xlsx'), 
             index=False
         )
         return ranked_features_dict
@@ -298,9 +299,9 @@ def HP_OPTIM_GENERATE_RESULTS (hp_optim_methodInstance: BaseSearchCV, hp_optim_m
     hp_optim_methodInstance.fit(x_train, y_train)
 
     xls_out = pd.DataFrame(hp_optim_methodInstance.cv_results_)
-    CHECK_DIR('output')
+    CHECK_DIR(OUT_DIR)
     xls_out.to_excel(
-        excel_writer=os.path.join('output', f'{hp_optim_method_name}-{scoring}.xlsx'), 
+        excel_writer=os.path.join(OUT_DIR, f'{hp_optim_method_name}-{scoring}.xlsx'), 
         index=False
     )
     return hp_optim_methodInstance.best_params_
@@ -330,7 +331,7 @@ def OPTUNA_GENERATE_PLOTS (study: optuna.study.Study, algo_name: str):
     )
     fig1.update_traces(**_plot1_cfgs['traces'])
     _UPDATE_FONT_PROPERTIES(fig1, font_settings, title_settings)
-    CHECK_DIR('output')
+    CHECK_DIR(OUT_DIR)
     pio.write_image(fig1, f'output/{algo_name}_optimization_history.png', format='png', scale=2)
 
     # plot-2
@@ -343,7 +344,7 @@ def OPTUNA_GENERATE_PLOTS (study: optuna.study.Study, algo_name: str):
     )
     fig2.update_traces(**_plot2_cfgs['traces'])
     _UPDATE_FONT_PROPERTIES(fig2, font_settings, title_settings)
-    CHECK_DIR('output')
+    CHECK_DIR(OUT_DIR)
     pio.write_image(fig2, f'output/{algo_name}_param_importance.png', format='png', scale=2)
 
     # plot-3
@@ -356,7 +357,7 @@ def OPTUNA_GENERATE_PLOTS (study: optuna.study.Study, algo_name: str):
     )
     fig3.update_traces(**_plot3_cfgs['traces'])
     _UPDATE_FONT_PROPERTIES(fig3, font_settings, title_settings)
-    CHECK_DIR('output')
+    CHECK_DIR(OUT_DIR)
     pio.write_image(fig3, f'output/{algo_name}_parallel_coordinate.png', format='png', scale=2)
 
     # plot-4
@@ -375,7 +376,7 @@ def OPTUNA_GENERATE_PLOTS (study: optuna.study.Study, algo_name: str):
     )
     fig4.update_traces(**_plot4_cfgs['traces'])
     _UPDATE_FONT_PROPERTIES(fig4, font_settings, title_settings)
-    CHECK_DIR('output')
+    CHECK_DIR(OUT_DIR)
     pio.write_image(fig4, f'output/{algo_name}_slice.png', format='png', scale=2)
 
     # plot-5
@@ -394,7 +395,7 @@ def OPTUNA_GENERATE_PLOTS (study: optuna.study.Study, algo_name: str):
     )
     fig5.update_traces(**_plot5_cfgs['traces'])
     _UPDATE_FONT_PROPERTIES(fig5, font_settings, title_settings)
-    CHECK_DIR('output')
+    CHECK_DIR(OUT_DIR)
     pio.write_image(fig5, f'output/{algo_name}_contour.png', format='png', scale=2)
 
 def SHAP_GENERATE_PLOT (model, X_train: pd.DataFrame, y_train: pd.DataFrame, model_algorithm: str, 
@@ -502,7 +503,7 @@ def SHAP_GENERATE_PLOT (model, X_train: pd.DataFrame, y_train: pd.DataFrame, mod
     #     fontname=PLOT_PROPS['TITLE']['FONT_STYLE']
     # )
     plt.savefig(
-        os.path.join('output', f'{model_algorithm}_Shap_Summary.png')
+        os.path.join(OUT_DIR, f'{model_algorithm}_Shap_Summary.png')
     )
     plt.close(fig)
 
@@ -550,9 +551,9 @@ def MODEL_BUILD_GENERATE_RESULTS (regressor, featureList: list, trainFilePath: s
     )
     rfr_results = pd.concat([rfr_pred1, rfr_pred2], axis=1)
     
-    CHECK_DIR('output')
+    CHECK_DIR(OUT_DIR)
     rfr_results.to_excel(
-        excel_writer=os.path.join('output', f'{regressorName}.xlsx'), 
+        excel_writer=os.path.join(OUT_DIR, f'{regressorName}.xlsx'), 
         index=False
     )
 
@@ -570,7 +571,7 @@ def MODEL_BUILD_GENERATE_RESULTS (regressor, featureList: list, trainFilePath: s
         str(regressor.get_params())
     ]
 
-    with open(file=os.path.join('output',f'{regressorName}_Results.txt'), mode='w', encoding='utf-8') as my_file_rfr:
+    with open(file=os.path.join(OUT_DIR,f'{regressorName}_Results.txt'), mode='w', encoding='utf-8') as my_file_rfr:
         for output in output_list_rfr:
             my_file_rfr.write(str(output) + '\n')
 
@@ -595,7 +596,7 @@ def MODEL_BUILD_GENERATE_RESULTS (regressor, featureList: list, trainFilePath: s
         fontname=PLOT_PROPS['TITLE']['FONT_STYLE']
     )
     plt.savefig(
-        os.path.join('output', f'{regressorName}_RocCurve_Test.png')
+        os.path.join(OUT_DIR, f'{regressorName}_RocCurve_Test.png')
     )
     plt.close(fig)
 
@@ -619,7 +620,7 @@ def MODEL_BUILD_GENERATE_RESULTS (regressor, featureList: list, trainFilePath: s
         fontname=PLOT_PROPS['TITLE']['FONT_STYLE']
     )
     plt.savefig(
-        os.path.join('output', f'{regressorName}_RocCurve_Train.png')
+        os.path.join(OUT_DIR, f'{regressorName}_RocCurve_Train.png')
     )
     plt.close(fig)
 
@@ -665,9 +666,9 @@ def RF_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
         HP_OPTIM_METHOD_INSTANCE.fit(x_train, y_train)
 
         xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
-        CHECK_DIR('output')
+        CHECK_DIR(OUT_DIR)
         xls_out.to_excel(
-            excel_writer=os.path.join('output', f"RFC_GS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
+            excel_writer=os.path.join(OUT_DIR, f"RFC_GS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
             index=False
         )
         results = HP_OPTIM_METHOD_INSTANCE.best_params_
@@ -696,9 +697,9 @@ def RF_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
         HP_OPTIM_METHOD_INSTANCE.fit(x_train, y_train)
 
         xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
-        CHECK_DIR('output')
+        CHECK_DIR(OUT_DIR)
         xls_out.to_excel(
-            excel_writer=os.path.join('output', f"RFC_RS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
+            excel_writer=os.path.join(OUT_DIR, f"RFC_RS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
             index=False
         )
         results = HP_OPTIM_METHOD_INSTANCE.best_params_
@@ -789,9 +790,9 @@ def SVM_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
         HP_OPTIM_METHOD_INSTANCE.fit(x_train, y_train)
 
         xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
-        CHECK_DIR('output')
+        CHECK_DIR(OUT_DIR)
         xls_out.to_excel(
-            excel_writer=os.path.join('output', f"SVM_GS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
+            excel_writer=os.path.join(OUT_DIR, f"SVM_GS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
             index=False
         )
         results = HP_OPTIM_METHOD_INSTANCE.best_params_
@@ -820,9 +821,9 @@ def SVM_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
         HP_OPTIM_METHOD_INSTANCE.fit(x_train, y_train)
 
         xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
-        CHECK_DIR('output')
+        CHECK_DIR(OUT_DIR)
         xls_out.to_excel(
-            excel_writer=os.path.join('output', f"SVM_RS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
+            excel_writer=os.path.join(OUT_DIR, f"SVM_RS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
             index=False
         )
         results = HP_OPTIM_METHOD_INSTANCE.best_params_
@@ -896,9 +897,9 @@ def LDA_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
         HP_OPTIM_METHOD_INSTANCE.fit(x_train, y_train)
 
         xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
-        CHECK_DIR('output')
+        CHECK_DIR(OUT_DIR)
         xls_out.to_excel(
-            excel_writer=os.path.join('output', f"LDA_GS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
+            excel_writer=os.path.join(OUT_DIR, f"LDA_GS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
             index=False
         )
         results = HP_OPTIM_METHOD_INSTANCE.best_params_
@@ -927,9 +928,9 @@ def LDA_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
         HP_OPTIM_METHOD_INSTANCE.fit(x_train, y_train)
 
         xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
-        CHECK_DIR('output')
+        CHECK_DIR(OUT_DIR)
         xls_out.to_excel(
-            excel_writer=os.path.join('output', f"LDA_RS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
+            excel_writer=os.path.join(OUT_DIR, f"LDA_RS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
             index=False
         )
         results = HP_OPTIM_METHOD_INSTANCE.best_params_
@@ -1000,9 +1001,9 @@ def LR_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
         HP_OPTIM_METHOD_INSTANCE.fit(x_train, y_train)
 
         xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
-        CHECK_DIR('output')
+        CHECK_DIR(OUT_DIR)
         xls_out.to_excel(
-            excel_writer=os.path.join('output', f"LR_GS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
+            excel_writer=os.path.join(OUT_DIR, f"LR_GS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
             index=False
         )
         results = HP_OPTIM_METHOD_INSTANCE.best_params_
@@ -1031,9 +1032,9 @@ def LR_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
         HP_OPTIM_METHOD_INSTANCE.fit(x_train, y_train)
 
         xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
-        CHECK_DIR('output')
+        CHECK_DIR(OUT_DIR)
         xls_out.to_excel(
-            excel_writer=os.path.join('output', f"LR_RS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
+            excel_writer=os.path.join(OUT_DIR, f"LR_RS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
             index=False
         )
         results = HP_OPTIM_METHOD_INSTANCE.best_params_
@@ -1125,9 +1126,9 @@ def KNN_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
         HP_OPTIM_METHOD_INSTANCE.fit(x_train, y_train)
 
         xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
-        CHECK_DIR('output')
+        CHECK_DIR(OUT_DIR)
         xls_out.to_excel(
-            excel_writer=os.path.join('output', f"KNN_GS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
+            excel_writer=os.path.join(OUT_DIR, f"KNN_GS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
             index=False
         )
         results = HP_OPTIM_METHOD_INSTANCE.best_params_
@@ -1156,9 +1157,9 @@ def KNN_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
         HP_OPTIM_METHOD_INSTANCE.fit(x_train, y_train)
 
         xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
-        CHECK_DIR('output')
+        CHECK_DIR(OUT_DIR)
         xls_out.to_excel(
-            excel_writer=os.path.join('output', f"KNN_RS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
+            excel_writer=os.path.join(OUT_DIR, f"KNN_RS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
             index=False
         )
         results = HP_OPTIM_METHOD_INSTANCE.best_params_
@@ -1235,9 +1236,9 @@ def GB_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
         HP_OPTIM_METHOD_INSTANCE.fit(x_train, y_train)
 
         xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
-        CHECK_DIR('output')
+        CHECK_DIR(OUT_DIR)
         xls_out.to_excel(
-            excel_writer=os.path.join('output', f"RFC_GS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
+            excel_writer=os.path.join(OUT_DIR, f"RFC_GS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
             index=False
         )
         results = HP_OPTIM_METHOD_INSTANCE.best_params_
@@ -1266,9 +1267,9 @@ def GB_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
         HP_OPTIM_METHOD_INSTANCE.fit(x_train, y_train)
 
         xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
-        CHECK_DIR('output')
+        CHECK_DIR(OUT_DIR)
         xls_out.to_excel(
-            excel_writer=os.path.join('output', f"RFC_RS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
+            excel_writer=os.path.join(OUT_DIR, f"RFC_RS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
             index=False
         )
         results = HP_OPTIM_METHOD_INSTANCE.best_params_
@@ -1380,9 +1381,9 @@ def MLP_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
         HP_OPTIM_METHOD_INSTANCE.fit(x_train_scaled, y_train) # NOT SCALED !!
 
         xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
-        CHECK_DIR('output')
+        CHECK_DIR(OUT_DIR)
         xls_out.to_excel(
-            excel_writer=os.path.join('output', f"MLP_GS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
+            excel_writer=os.path.join(OUT_DIR, f"MLP_GS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
             index=False
         )
         results = HP_OPTIM_METHOD_INSTANCE.best_params_
@@ -1422,9 +1423,9 @@ def MLP_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
         HP_OPTIM_METHOD_INSTANCE.fit(x_train_scaled, y_train)
 
         xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
-        CHECK_DIR('output')
+        CHECK_DIR(OUT_DIR)
         xls_out.to_excel(
-            excel_writer=os.path.join('output', f"MLP_RS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
+            excel_writer=os.path.join(OUT_DIR, f"MLP_RS-{PROCESS_PARAMS['SCORING']}.xlsx"), 
             index=False
         )
         results = HP_OPTIM_METHOD_INSTANCE.best_params_

@@ -2,14 +2,14 @@ from customtkinter import *
 from PIL import Image, ImageSequence
 from os import path as os_path
 import json
-from data import DATA, _COMMON_PROPS
+from constants import my_config_manager, IMG_DIR
 import optuna
 import time
 
-COLORS = DATA['colors']
-OPTUNA_TOTAL_TRIALS = _COMMON_PROPS['hp_optim']['optuna_total_trials']
+COLORS = my_config_manager.get('colors')
+OPTUNA_TOTAL_TRIALS = my_config_manager.get('optuna.total_trials')
 
-def getImgPath (img_name, image_dir='images'):
+def getImgPath (img_name, image_dir=IMG_DIR):
     return os_path.join(image_dir, img_name)
 
 class FeatureSelectEntry(CTkFrame):
@@ -434,7 +434,7 @@ class RankedFeaturesSelectDialog(CTkToplevel):
         self.my_font = my_font
         self.MIN_CHOOSE=MIN_CHOOSE
 
-        self.feature_ranking_method = _COMMON_PROPS['feature_selection']['ranking_method']
+        self.feature_ranking_method = my_config_manager.get('feature_selection.ranking_method')
         if self.feature_ranking_method=='MDF':
             self.feature_ranking_method_column = 'Absolute Mean Diff.(MDF)' 
         elif self.feature_ranking_method=='MIS': 
@@ -876,6 +876,8 @@ class InProgressWindow:
             self.progress_window = CTkToplevel(self.parent, fg_color='white')  # Directly reference root
             self.progress_window.geometry("300x200")
             self.progress_window.title("Fetching..")
+            self.progress_window.focus_force()
+            self.progress_window.grab_set()
 
             # Label to display the GIF
             self.gif_label = CTkLabel(

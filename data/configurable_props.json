@@ -1,0 +1,195 @@
+{
+    "feature_selection": {
+        "ranking_method": "MIS",
+        "min_features_selected": 12
+    },
+    "optuna": {
+        "total_trials": 50
+    },
+    "plot_properties": {
+        "ROC_CURVE": {
+            "COLOR": "red",
+            "LW": 3
+        },
+        "DIAGONAL_REF_LINE": {
+            "COLOR": "blue"
+        },
+        "TITLE": {
+            "FONT_SIZE": 21,
+            "FONT_WEIGHT": "bold",
+            "FONT_STYLE": "Times New Roman"
+        },
+        "RC_PARAMS": {
+            "FONT_SIZE": 12,
+            "FONT_WEIGHT": "bold",
+            "FONT_STYLE": "Courier New"
+        },
+        "SHAP": {
+            "ENABLED": true,
+            "CLASS_INDEX": 1,
+            "COLOR_SCHEME": "turbo_r"
+        },
+        "OPTUNA": {
+            "plot1": {
+                "layout": {
+                    "title": "Optimization History",
+                    "height": 600,
+                    "width": 800,
+                    "plot_bgcolor": "whitesmoke",
+                    "paper_bgcolor": "white",
+                    "xaxis": {
+                        "tickangle": 45,
+                        "showgrid": true,
+                        "gridcolor": "white",
+                        "dtick": 50,
+                        "zeroline": false,
+                        "zerolinecolor": "white",
+                        "zerolinewidth": 2
+                    },
+                    "yaxis": {
+                        "tickangle": 45,
+                        "showgrid": true,
+                        "gridcolor": "white",
+                        "dtick": 50,
+                        "zeroline": false,
+                        "zerolinecolor": "white",
+                        "zerolinewidth": 2
+                    }
+                },
+                "traces": {
+                    "marker_color": "blue",
+                    "line_color": "red"
+                }
+            },
+            "plot2": {
+                "layout": {
+                    "title": "Hyperparameter Importances",
+                    "height": 500,
+                    "width": 800,
+                    "plot_bgcolor": "whitesmoke",
+                    "paper_bgcolor": "white",
+                    "bargap": 0.2,
+                    "xaxis": {
+                        "title": "Importance",
+                        "showline": true,
+                        "linecolor": "white",
+                        "linewidth": 1,
+                        "tickangle": 45,
+                        "ticklen": 15,
+                        "dtick": 0.1,
+                        "showgrid": true,
+                        "gridcolor": "white",
+                        "gridwidth": 0.5
+                    },
+                    "yaxis": {
+                        "title": "HyperParameters",
+                        "tickangle": 0
+                    }
+                },
+                "traces": {
+                    "marker_color": "red"
+                }
+            },
+            "plot3": {
+                "layout": {
+                    "title": "Parallel Coordinate Plot",
+                    "height": 600,
+                    "width": 800,
+                    "plot_bgcolor": "whitesmoke",
+                    "paper_bgcolor": "white"
+                },
+                "traces": {
+                    "line": {
+                        "colorscale": "turbo_r",
+                        "showscale": true,
+                        "colorbar": {
+                            "title": "ColorScale"
+                        }
+                    }
+                }
+            },
+            "plot4": {
+                "layout": {
+                    "title": "Slice Plot",
+                    "height": 600,
+                    "width": 1000,
+                    "plot_bgcolor": "whitesmoke",
+                    "paper_bgcolor": "white"
+                },
+                "traces": {
+                    "marker": {
+                        "size": 6,
+                        "colorbar": {
+                            "title": "Color_Scale"
+                        },
+                        "colorscale": "portland"
+                    }
+                },
+                "xaxis": {
+                    "showgrid": true,
+                    "gridcolor": "white",
+                    "gridwidth": 1,
+                    "zeroline": true,
+                    "zerolinecolor": "white",
+                    "showticklabels": true
+                },
+                "yaxis": {
+                    "showgrid": true,
+                    "gridcolor": "white",
+                    "gridwidth": 1,
+                    "zeroline": true,
+                    "zerolinecolor": "white",
+                    "showticklabels": true
+                }
+            },
+            "plot5": {
+                "layout": {
+                    "title": "Contour Plot",
+                    "height": 1000,
+                    "width": 1000,
+                    "plot_bgcolor": "whitesmoke",
+                    "paper_bgcolor": "white"
+                },
+                "xaxis": {
+                    "showline": true,
+                    "linecolor": "white",
+                    "linewidth": 1,
+                    "showgrid": true,
+                    "gridcolor": "white",
+                    "gridwidth": 1
+                },
+                "yaxis": {
+                    "showline": true,
+                    "linecolor": "white",
+                    "linewidth": 1,
+                    "showgrid": true,
+                    "gridcolor": "white",
+                    "gridwidth": 1
+                },
+                "traces": {
+                    "selector": {
+                        "type": "contour"
+                    },
+                    "colorscale": "portland",
+                    "contours": {
+                        "coloring": "fill",
+                        "showlines": true,
+                        "size": 0.5
+                    },
+                    "line": {
+                        "color": "white",
+                        "width": 1
+                    },
+                    "colorbar": {
+                        "title": "Color_Scale",
+                        "titleside": "right",
+                        "tickfont": {
+                            "size": 12,
+                            "color": "black"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

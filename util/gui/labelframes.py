@@ -1,8 +1,8 @@
 import customtkinter as ctk
 from tkinter import LabelFrame as tkLabelFrame
-from data import DATA
+from constants import my_config_manager
 from util.gui.widgets import *
-COLORS = DATA['colors']
+COLORS = my_config_manager.get('colors')
 
 # With algoMap = {'RF': {'algo_name': 'Random Forest', 'algo_hp_optim_func': RF_HP_OPTIM}}
 # For RF: algoValueInMap = algoMap['RF']
@@ -256,8 +256,12 @@ class ModelBuild_AlgoLabelFrame:
             labelanchor=ctk.NW, background=self.fg_color
         )
 
-
-
+class SettingsFrame:
+    def __init__(self, masterFrame: ctk.CTkFrame, my_font: ctk.CTkFont, colors: dict):
+        self.master = masterFrame
+        self.my_font = my_font
+        self.colors = colors
+        
 
 # HP_OPTIM FIELDS
 class MyStepRangeEntryField:

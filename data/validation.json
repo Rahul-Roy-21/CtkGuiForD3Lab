@@ -1,0 +1,927 @@
+{
+    "feature_selection": {
+        "ranking_method": {
+            "dtype": "str",
+            "utype": "menu",
+            "options": [
+                "MIS",
+                "MDF"
+            ],
+            "default": 0
+        },
+        "min_features_selected": {
+            "dtype": "int",
+            "utype": "var",
+            "range": [
+                5,
+                25
+            ],
+            "default": 10
+        }
+    },
+    "optuna": {
+        "total_trials": {
+            "dtype": "int",
+            "utype": "var",
+            "range": [
+                50,
+                500
+            ],
+            "default": 50
+        }
+    },
+    "plot_properties": {
+        "ROC_CURVE": {
+            "COLOR": {
+                "dtype": "str",
+                "utype": "menu",
+                "options": [
+                    "red",
+                    "blue",
+                    "green"
+                ],
+                "default": 0
+            },
+            "LW": {
+                "dtype": "int",
+                "utype": "var",
+                "range": [
+                    1,
+                    10
+                ],
+                "default": 3
+            }
+        },
+        "DIAGONAL_REF_LINE": {
+            "COLOR": {
+                "dtype": "str",
+                "utype": "menu",
+                "options": [
+                    "red",
+                    "blue",
+                    "green"
+                ],
+                "default": 1
+            }
+        },
+        "TITLE": {
+            "FONT_SIZE": {
+                "dtype": "int",
+                "utype": "var",
+                "range": [
+                    10,
+                    30
+                ],
+                "default": 21
+            },
+            "FONT_WEIGHT": {
+                "dtype": "str",
+                "utype": "menu",
+                "options": [
+                    "normal",
+                    "bold"
+                ],
+                "default": 1
+            },
+            "FONT_STYLE": {
+                "dtype": "str",
+                "utype": "menu",
+                "options": [
+                    "Times New Roman",
+                    "Cambria",
+                    "Helvatica",
+                    "Courier New"
+                ],
+                "default": 0
+            }
+        },
+        "RC_PARAMS": {
+            "FONT_SIZE": {
+                "dtype": "int",
+                "utype": "var",
+                "range": [
+                    10,
+                    30
+                ],
+                "default": 12
+            },
+            "FONT_WEIGHT": {
+                "dtype": "str",
+                "utype": "menu",
+                "options": [
+                    "normal",
+                    "bold"
+                ],
+                "default": 1
+            },
+            "FONT_STYLE": {
+                "dtype": "str",
+                "utype": "menu",
+                "options": [
+                    "Times New Roman",
+                    "Cambria",
+                    "Helvatica",
+                    "Courier New"
+                ],
+                "default": 3
+            }
+        },
+        "SHAP": {
+            "ENABLED": {
+                "dtype": "bool",
+                "default": true
+            },
+            "CLASS_INDEX": {
+                "dtype": "int",
+                "utype": "menu",
+                "options": [
+                    0,
+                    1
+                ],
+                "default": 1
+            },
+            "COLOR_SCHEME": {
+                "dtype": "str",
+                "utype": "menu",
+                "options": [
+                    "turbo_r"
+                ],
+                "default": 0
+            }
+        },
+        "OPTUNA": {
+            "plot1": {
+                "layout": {
+                    "title": {
+                        "dtype": "str",
+                        "utype": "var",
+                        "value": "Optimization History"
+                    },
+                    "height": {
+                        "dtype": "int",
+                        "utype": "var",
+                        "range": [
+                            400,
+                            1000
+                        ],
+                        "default": 600
+                    },
+                    "width": {
+                        "dtype": "int",
+                        "utype": "var",
+                        "range": [
+                            400,
+                            1000
+                        ],
+                        "default": 800
+                    },
+                    "plot_bgcolor": {
+                        "dtype": "str",
+                        "utype": "menu",
+                        "options": [
+                            "whitesmoke"
+                        ],
+                        "default": 0
+                    },
+                    "paper_bgcolor": {
+                        "dtype": "str",
+                        "utype": "menu",
+                        "options": [
+                            "white"
+                        ],
+                        "default": 0
+                    },
+                    "xaxis": {
+                        "tickangle": {
+                            "dtype": "int",
+                            "utype": "menu",
+                            "options": [
+                                0,
+                                45,
+                                90
+                            ],
+                            "default": 1
+                        },
+                        "showgrid": {
+                            "dtype": "bool",
+                            "default": true
+                        },
+                        "gridcolor": {
+                            "dtype": "str",
+                            "utype": "menu",
+                            "options": [
+                                "white"
+                            ],
+                            "default": 0
+                        },
+                        "dtick": {
+                            "dtype": "int",
+                            "utype": "menu",
+                            "options": [
+                                50
+                            ],
+                            "default": 0
+                        },
+                        "zeroline": {
+                            "dtype": "bool",
+                            "default": false
+                        },
+                        "zerolinecolor": {
+                            "dtype": "str",
+                            "utype": "menu",
+                            "options": [
+                                "white"
+                            ],
+                            "default": 0
+                        },
+                        "zerolinewidth": {
+                            "dtype": "int",
+                            "utype": "var",
+                            "range": [
+                                1,
+                                5
+                            ],
+                            "default": 2
+                        }
+                    },
+                    "yaxis": {
+                        "tickangle": {
+                            "dtype": "int",
+                            "utype": "menu",
+                            "options": [
+                                0,
+                                45,
+                                90
+                            ],
+                            "default": 1
+                        },
+                        "showgrid": {
+                            "dtype": "bool",
+                            "default": true
+                        },
+                        "gridcolor": {
+                            "dtype": "str",
+                            "utype": "menu",
+                            "options": [
+                                "white"
+                            ],
+                            "default": 0
+                        },
+                        "dtick": {
+                            "dtype": "int",
+                            "utype": "menu",
+                            "options": [
+                                50
+                            ],
+                            "default": 0
+                        },
+                        "zeroline": {
+                            "dtype": "bool",
+                            "default": false
+                        },
+                        "zerolinecolor": {
+                            "dtype": "str",
+                            "utype": "menu",
+                            "options": [
+                                "white"
+                            ],
+                            "default": 0
+                        },
+                        "zerolinewidth": {
+                            "dtype": "int",
+                            "utype": "var",
+                            "range": [
+                                1,
+                                5
+                            ],
+                            "default": 2
+                        }
+                    }
+                },
+                "traces": {
+                    "marker_color": {
+                        "dtype": "str",
+                        "utype": "menu",
+                        "options": [
+                            "red",
+                            "blue",
+                            "green"
+                        ],
+                        "default": 1
+                    },
+                    "line_color": {
+                        "dtype": "str",
+                        "utype": "menu",
+                        "options": [
+                            "red",
+                            "blue",
+                            "green"
+                        ],
+                        "default": 0
+                    }
+                }
+            },
+            "plot2": {
+                "layout": {
+                    "title": {
+                        "dtype": "str",
+                        "utype": "var",
+                        "value": "Hyperparameter Importances"
+                    },
+                    "height": {
+                        "dtype": "int",
+                        "utype": "var",
+                        "range": [
+                            400,
+                            1000
+                        ],
+                        "default": 500
+                    },
+                    "width": {
+                        "dtype": "int",
+                        "utype": "var",
+                        "range": [
+                            400,
+                            1000
+                        ],
+                        "default": 800
+                    },
+                    "plot_bgcolor": {
+                        "dtype": "str",
+                        "utype": "menu",
+                        "options": [
+                            "whitesmoke"
+                        ],
+                        "default": 0
+                    },
+                    "paper_bgcolor": {
+                        "dtype": "str",
+                        "utype": "menu",
+                        "options": [
+                            "white"
+                        ],
+                        "default": 0
+                    },
+                    "bargap": {
+                        "dtype": "float",
+                        "utype": "var",
+                        "range": [
+                            0.1,
+                            1,
+                            0.1
+                        ],
+                        "default": 0.2
+                    },
+                    "xaxis": {
+                        "title": {
+                            "dtype": "str",
+                            "utype": "var",
+                            "value": "Importances"
+                        },
+                        "showline": {
+                            "dtype": "bool",
+                            "default": true
+                        },
+                        "linecolor": {
+                            "dtype": "str",
+                            "utype": "menu",
+                            "options": [
+                                "white"
+                            ],
+                            "default": 0
+                        },
+                        "linewidth": {
+                            "dtype": "int",
+                            "utype": "var",
+                            "range": [
+                                1,
+                                5
+                            ],
+                            "default": 1
+                        },
+                        "tickangle": {
+                            "dtype": "int",
+                            "utype": "menu",
+                            "options": [
+                                0,
+                                45,
+                                90
+                            ],
+                            "default": 0
+                        },
+                        "ticklen": {
+                            "dtype": "int",
+                            "utype": "menu",
+                            "options": [
+                                15
+                            ],
+                            "default": 0
+                        },
+                        "dtick": {
+                            "dtype": "float",
+                            "utype": "var",
+                            "range": [
+                                0.1,
+                                1,
+                                0.1
+                            ],
+                            "default": 0.1
+                        },
+                        "showgrid": {
+                            "dtype": "bool",
+                            "default": true
+                        },
+                        "gridcolor": {
+                            "dtype": "str",
+                            "utype": "menu",
+                            "options": [
+                                "white"
+                            ],
+                            "default": 0
+                        },
+                        "gridwidth": {
+                            "dtype": "float",
+                            "utype": "var",
+                            "range": [
+                                0.1,
+                                1,
+                                0.1
+                            ],
+                            "default": 0.5
+                        }
+                    },
+                    "yaxis": {
+                        "title": {
+                            "dtype": "str",
+                            "utype": "var",
+                            "value": "HyperParameters"
+                        },
+                        "tickangle": {
+                            "dtype": "int",
+                            "utype": "menu",
+                            "options": [
+                                0,
+                                45,
+                                90
+                            ],
+                            "default": 0
+                        }
+                    }
+                },
+                "traces": {
+                    "marker_color": {
+                        "dtype": "str",
+                        "utype": "menu",
+                        "options": [
+                            "red",
+                            "blue",
+                            "green"
+                        ],
+                        "default": 0
+                    }
+                }
+            },
+            "plot3": {
+                "layout": {
+                    "title": {
+                        "dtype": "str",
+                        "utype": "var",
+                        "value": "Parallel Coordinate Plot"
+                    },
+                    "height": {
+                        "dtype": "int",
+                        "utype": "var",
+                        "range": [
+                            400,
+                            1000
+                        ],
+                        "default": 600
+                    },
+                    "width": {
+                        "dtype": "int",
+                        "utype": "var",
+                        "range": [
+                            400,
+                            1000
+                        ],
+                        "default": 800
+                    },
+                    "plot_bgcolor": {
+                        "dtype": "str",
+                        "utype": "menu",
+                        "options": [
+                            "whitesmoke"
+                        ],
+                        "default": 0
+                    },
+                    "paper_bgcolor": {
+                        "dtype": "str",
+                        "utype": "menu",
+                        "options": [
+                            "white"
+                        ],
+                        "default": 0
+                    }
+                },
+                "traces": {
+                    "line": {
+                        "colorscale": {
+                            "dtype": "str",
+                            "utype": "menu",
+                            "options": [
+                                "turbo_r"
+                            ],
+                            "default": 0
+                        },
+                        "showscale": {
+                            "dtype": "bool",
+                            "default": true
+                        },
+                        "colorbar": {
+                            "title": {
+                                "dtype": "str",
+                                "utype": "var",
+                                "value": "ColorScale"
+                            }
+                        }
+                    }
+                }
+            },
+            "plot4": {
+                "layout": {
+                    "title": {
+                        "dtype": "str",
+                        "utype": "var",
+                        "value": "Slice Plot"
+                    },
+                    "height": {
+                        "dtype": "int",
+                        "utype": "var",
+                        "range": [
+                            400,
+                            1000
+                        ],
+                        "default": 600
+                    },
+                    "width": {
+                        "dtype": "int",
+                        "utype": "var",
+                        "range": [
+                            400,
+                            1000
+                        ],
+                        "default": 1000
+                    },
+                    "plot_bgcolor": {
+                        "dtype": "str",
+                        "utype": "menu",
+                        "options": [
+                            "whitesmoke"
+                        ],
+                        "default": 0
+                    },
+                    "paper_bgcolor": {
+                        "dtype": "str",
+                        "utype": "menu",
+                        "options": [
+                            "white"
+                        ],
+                        "default": 0
+                    }
+                },
+                "traces": {
+                    "marker": {
+                        "size": {
+                            "dtype": "int",
+                            "utype": "var",
+                            "range": [
+                                1,
+                                10
+                            ],
+                            "default": 6
+                        },
+                        "colorbar": {
+                            "title": {
+                                "dtype": "str",
+                                "utype": "var",
+                                "value": "Color_Scale"
+                            }
+                        },
+                        "colorscale": {
+                            "dtype": "str",
+                            "utype": "var",
+                            "value": "portland"
+                        }
+                    }
+                },
+                "xaxis": {
+                    "showgrid": {
+                        "dtype": "bool",
+                        "default": true
+                    },
+                    "gridcolor": {
+                        "dtype": "str",
+                        "utype": "menu",
+                        "options": [
+                            "white"
+                        ],
+                        "default": 0
+                    },
+                    "gridwidth": {
+                        "dtype": "int",
+                        "utype": "var",
+                        "range": [
+                            1,
+                            5
+                        ],
+                        "default": 1
+                    },
+                    "zeroline": {
+                        "dtype": "bool",
+                        "default": true
+                    },
+                    "zerolinecolor": {
+                        "dtype": "str",
+                        "utype": "menu",
+                        "options": [
+                            "white"
+                        ],
+                        "default": 0
+                    },
+                    "showticklabels": {
+                        "dtype": "bool",
+                        "default": true
+                    }
+                },
+                "yaxis": {
+                    "showgrid": {
+                        "dtype": "bool",
+                        "default": true
+                    },
+                    "gridcolor": {
+                        "dtype": "str",
+                        "utype": "menu",
+                        "options": [
+                            "white"
+                        ],
+                        "default": 0
+                    },
+                    "gridwidth": {
+                        "dtype": "int",
+                        "utype": "var",
+                        "range": [
+                            1,
+                            5
+                        ],
+                        "default": 1
+                    },
+                    "zeroline": {
+                        "dtype": "bool",
+                        "default": true
+                    },
+                    "zerolinecolor": {
+                        "dtype": "str",
+                        "utype": "menu",
+                        "options": [
+                            "white"
+                        ],
+                        "default": 0
+                    },
+                    "showticklabels": {
+                        "dtype": "bool",
+                        "default": true
+                    }
+                }
+            },
+            "plot5": {
+                "layout": {
+                    "title": {
+                        "dtype": "str",
+                        "utype": "var",
+                        "value": "Contour Plot"
+                    },
+                    "height": {
+                        "dtype": "int",
+                        "utype": "var",
+                        "range": [
+                            400,
+                            1000
+                        ],
+                        "default": 1000
+                    },
+                    "width": {
+                        "dtype": "int",
+                        "utype": "var",
+                        "range": [
+                            400,
+                            1000
+                        ],
+                        "default": 1000
+                    },
+                    "plot_bgcolor": {
+                        "dtype": "str",
+                        "utype": "menu",
+                        "options": [
+                            "whitesmoke"
+                        ],
+                        "default": 0
+                    },
+                    "paper_bgcolor": {
+                        "dtype": "str",
+                        "utype": "menu",
+                        "options": [
+                            "white"
+                        ],
+                        "default": 0
+                    }
+                },
+                "xaxis": {
+                    "showline": {
+                        "dtype": "bool",
+                        "default": true
+                    },
+                    "linecolor": {
+                        "dtype": "str",
+                        "utype": "menu",
+                        "options": [
+                            "white"
+                        ],
+                        "default": 0
+                    },
+                    "linewidth": {
+                        "dtype": "int",
+                        "utype": "var",
+                        "range": [
+                            1,
+                            5
+                        ],
+                        "default": 1
+                    },
+                    "showgrid": {
+                        "dtype": "bool",
+                        "default": true
+                    },
+                    "gridcolor": {
+                        "dtype": "str",
+                        "utype": "menu",
+                        "options": [
+                            "white"
+                        ],
+                        "default": 0
+                    },
+                    "gridwidth": {
+                        "dtype": "int",
+                        "utype": "var",
+                        "range": [
+                            1,
+                            5
+                        ],
+                        "default": 1
+                    }
+                },
+                "yaxis": {
+                    "showline": {
+                        "dtype": "bool",
+                        "default": true
+                    },
+                    "linecolor": {
+                        "dtype": "str",
+                        "utype": "menu",
+                        "options": [
+                            "white"
+                        ],
+                        "default": 0
+                    },
+                    "linewidth": {
+                        "dtype": "int",
+                        "utype": "var",
+                        "range": [
+                            1,
+                            5
+                        ],
+                        "default": 1
+                    },
+                    "showgrid": {
+                        "dtype": "bool",
+                        "default": true
+                    },
+                    "gridcolor": {
+                        "dtype": "str",
+                        "utype": "menu",
+                        "options": [
+                            "white"
+                        ],
+                        "default": 0
+                    },
+                    "gridwidth": {
+                        "dtype": "int",
+                        "utype": "var",
+                        "range": [
+                            1,
+                            5
+                        ],
+                        "default": 1
+                    }
+                },
+                "traces": {
+                    "selector": {
+                        "type": {
+                            "dtype": "str",
+                            "utype": "menu",
+                            "options": [
+                                "contour"
+                            ],
+                            "default": 0
+                        }
+                    },
+                    "colorscale": {
+                        "dtype": "str",
+                        "utype": "menu",
+                        "options": [
+                            "portland"
+                        ],
+                        "default": 0
+                    },
+                    "contours": {
+                        "coloring": {
+                            "dtype": "str",
+                            "utype": "menu",
+                            "options": [
+                                "fill"
+                            ],
+                            "default": 0
+                        },
+                        "showlines": {
+                            "dtype": "bool",
+                            "default": true
+                        },
+                        "size": {
+                            "dtype": "float",
+                            "utype": "var",
+                            "range": [
+                                0.1,
+                                1,
+                                0.1
+                            ],
+                            "default": 0.5
+                        }
+                    },
+                    "line": {
+                        "color": {
+                            "dtype": "str",
+                            "utype": "menu",
+                            "options": [
+                                "white"
+                            ],
+                            "default": 0
+                        },
+                        "width": {
+                            "dtype": "int",
+                            "utype": "var",
+                            "range": [
+                                1,
+                                5
+                            ],
+                            "default": 1
+                        }
+                    },
+                    "colorbar": {
+                        "title": {
+                            "dtype": "str",
+                            "utype": "var",
+                            "value": "Color_Scale"
+                        },
+                        "titleside": {
+                            "dtype": "str",
+                            "utype": "menu",
+                            "options": [
+                                "left",
+                                "right"
+                            ],
+                            "default": 1
+                        },
+                        "tickfont": {
+                            "size": {
+                                "dtype": "int",
+                                "utype": "var",
+                                "range": [
+                                    10,
+                                    50
+                                ],
+                                "default": 12
+                            },
+                            "color": {
+                                "dtype": "str",
+                                "utype": "menu",
+                                "options": [
+                                    "black"
+                                ],
+                                "default": 0
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

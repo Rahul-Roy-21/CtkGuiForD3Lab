@@ -3,10 +3,10 @@ from PIL import Image
 from tkinter import filedialog, LabelFrame as tkLabelFrame
 import json
 from threading import Thread
+from constants import my_config_manager, VALIDATION_JSON_PATH
 from util.gui.widgets import getImgPath
 from util.ml.functions import CHECK_XLS_FILES, GET_RANKED_FEATURES, KENNARD_STONE, ACTIVITY_BASED_DIV, RANDOM_DIV
 from util.gui.widgets import CustomWarningBox, FeatureSelectEntry, InProgressWindow, CustomSuccessBox
-from data import _COMMON_PROPS
 
 class TaskPanel:
     def __init__(self,master:ctk.CTk, my_font:ctk.CTkFont, 
@@ -34,9 +34,9 @@ class TaskPanel:
         model_build_panel.grid_columnconfigure(0,weight=1)
         model_build_panel.grid_rowconfigure(tuple(range(1,7)), weight=1)
         dataset_div_panel.grid_columnconfigure(0,weight=1)
-        dataset_div_panel.grid_rowconfigure(tuple(range(1,7)), weight=1)
+        #dataset_div_panel.grid_rowconfigure(tuple(range(1,7)), weight=1)
         settings_panel.grid_columnconfigure(0,weight=1)
-        settings_panel.grid_rowconfigure(tuple(range(1,7)), weight=1)
+        #settings_panel.grid_rowconfigure(tuple(range(1,7)), weight=1)
         default_panel.grid_columnconfigure(0,weight=1)
 
         default_panel_label=ctk.CTkLabel(master=default_panel,text='default_panel')
@@ -268,7 +268,7 @@ class DataSetPanel:
     def validate_train_test_files(self):
         if not self.train_entryVar.get() or not self.test_entryVar.get():
             return
-         
+        
         inProgress = InProgressWindow(self.master, self.my_font, getImgPath("check_files.gif"))
         inProgress.create()
         self.ranked_features_dicts = None
@@ -290,7 +290,9 @@ class DataSetPanel:
             self.ALL_LOADED_FEATURES.set(json.dumps(self.ranked_features_dicts))
         
         def populate_loaded_features_to_selected ():
-            MIN_COUNT_OF_FEATURES_TO_SELECT = int(_COMMON_PROPS['feature_selection']['min_features_selected'])
+            MIN_COUNT_OF_FEATURES_TO_SELECT = my_config_manager.get(
+                'feature_selection.min_features_selected'
+            )
             selected_features = [
                 rec['Feature'] for rec in self.ranked_features_dicts 
                 if rec['Rank']<=MIN_COUNT_OF_FEATURES_TO_SELECT
@@ -380,7 +382,221 @@ class FeatureAndAlgorithmFrame:
     # algo_dropdown needed later to configure the show_frames() function
     def _get_algorithm_optionmenu (self):
         return self.algo_dropdown
-    
+
+class SettingsFrame:
+    def __init__(self, masterFrame: ctk.CTkFrame, my_font: ctk.CTkFont, colors: dict):
+        self.master = masterFrame
+        self.master.grid_rowconfigure(0, weight=1)
+        self.my_font = my_font
+        self.colors = colors
+        self.settings_mainframe = self._get_labelframe(self.master, 'Settings')
+        self.settings_mainframe.grid(row=0, column=0, padx=5, pady=5, sticky=ctk.NSEW)
+        self.settings_mainframe.grid_columnconfigure((0,1), weight=1)
+        self.settings_mainframe.grid_rowconfigure(0,weight=1) # only scrollable frame expands
+
+        # CREATE WIDGETS -> get the number of rows (num of configurable props)
+        # LAYOUT ->   [name](1) : [widget] [current_val_in_db] (2) 
+        self.scrollable_frame = ctk.CTkScrollableFrame(
+            self.settings_mainframe, fg_color=colors['fg']
+        )
+        self.scrollable_frame.grid(row=0, column=0, columnspan=2, padx=5, pady=5, sticky=ctk.NSEW)
+        self.scrollable_frame.grid_columnconfigure(tuple(range(3)), weight=1)
+        self._create_widgets() # Inside SCROLLABLE FRAME 
+
+        # 2 buttons - Discard all changes and Save Updates
+        self.reset_btn = ctk.CTkButton(
+            master=self.settings_mainframe,
+            text='Reset Changes',
+            font=self.my_font,
+            fg_color=self.colors['reset_btn']['fg'],
+            hover_color=self.colors['reset_btn']['hover'],
+            text_color='white',
+            corner_radius=0,
+            border_spacing=0,
+            command=self._save
+        )  
+        self.reset_btn.grid(row=1, column=0, padx=10, pady=5, sticky=ctk.NSEW)
+
+        self.save_btn = ctk.CTkButton(
+            master=self.settings_mainframe,
+            text='Save Changes',
+            font=self.my_font,
+            fg_color=self.colors['save_btn']['fg'],
+            hover_color=self.colors['save_btn']['hover'],
+            text_color='white',
+            corner_radius=0,
+            border_spacing=0,
+            command=self._save
+        )  
+        self.save_btn.grid(row=1, column=1, padx=15, pady=5, sticky=ctk.NSEW)
+
+    def _create_widgets(self):
+        #ctk.CTkLabel(self.scrollable_frame, text="scrollable").grid(row=0,column=0)
+        sorted_configurable_setting_keys = my_config_manager.get_sorted_setting_keys()
+        self._created_map = {}  # KEY -> (var, settings_cur_value_label, original_value)
+        for rowIdx, key in enumerate(sorted_configurable_setting_keys):
+            settings_label = ctk.CTkLabel(self.scrollable_frame, text=key+" :", font=self.my_font)
+            settings_label.grid(row=rowIdx, column=0, padx=5, pady=5, sticky=ctk.E)
+
+            props_map = my_config_manager.get_valid_props_map(key)
+            settings_widget, var = self._create_widget_from_props(key, props_map)
+            settings_widget.grid(row=rowIdx, column=1, padx=5, pady=5, sticky=ctk.EW)
+
+            settings_cur_value_label = ctk.CTkLabel(self.scrollable_frame, text="", font=self.my_font)
+            settings_cur_value_label.grid(row=rowIdx, column=2, padx=5, pady=5, sticky=ctk.W)
+
+            self._created_map[key] = {
+                'var':var, 'value_label': settings_cur_value_label, 'original_value': var.get()
+            }
+
+    def _create_widget_from_props (self, key: str, props: dict):
+        print('KEY: ', key, ', WIDGET: ', props)
+        dtype, utype = props['dtype'], props.get('utype', None)
+        
+        if dtype == 'str' and utype == 'menu':
+            options, default_option_idx = props['options'], props['default']
+            default_value = options[default_option_idx % len(options)]
+            var = ctk.StringVar(value=default_value)
+            widget = ctk.CTkOptionMenu(
+                master=self.scrollable_frame, 
+                variable=var, 
+                values=props['options'],
+                font=self.my_font,
+                dropdown_font=self.my_font,
+                corner_radius=0,
+                anchor=ctk.CENTER,
+                button_color=self.colors['optionmenu']['fg'],
+                button_hover_color=self.colors['optionmenu']['hover'],
+                fg_color=self.colors['optionmenu']['fg'] 
+            )
+
+        elif dtype == 'str' and utype == 'var':
+            default_value = props['value']
+            var = ctk.StringVar(value=default_value)
+            widget = ctk.CTkEntry(
+                master=self.scrollable_frame, 
+                textvariable=var, 
+                border_width=0,
+                corner_radius=0,
+                font=self.my_font
+            )
+
+        elif dtype == 'int' and utype == 'menu':
+            options, default_option_idx = props['options'], props['default']
+            default_value = options[default_option_idx % len(options)]
+            var = ctk.IntVar(value=default_value)
+            widget = ctk.CTkOptionMenu(
+                master=self.scrollable_frame, 
+                variable=var, 
+                values=list(map(str, props['options'])),
+                font=self.my_font,
+                dropdown_font=self.my_font,
+                corner_radius=0,
+                anchor=ctk.CENTER,
+                button_color=self.colors['optionmenu']['fg'],
+                button_hover_color=self.colors['optionmenu']['hover'],
+                fg_color=self.colors['optionmenu']['fg'] 
+            )
+
+        elif dtype == 'int' and utype == 'var':
+            default_value = props['default']
+            var = ctk.IntVar(value=default_value)
+            # widget = ctk.CTkSlider(
+            #     master=self.scrollable_frame, 
+            #     from_=int(props['range'][0]), 
+            #     to=int(props['range'][1]), 
+            #     variable=var
+            # )
+            widget = SliderWithLabel(
+                master=self.scrollable_frame, 
+                from_=int(props['range'][0]), 
+                to=int(props['range'][1]), 
+                var=var,
+                fg_color="transparent",
+                font=self.my_font
+            )
+
+        elif dtype == 'float' and utype == 'var':
+            default_value = props['default']
+            range_props = props['range']
+            num_of_steps = int((range_props[1]-range_props[0]+range_props[2]) / range_props[2])
+            var = ctk.DoubleVar(value=default_value)
+            # widget = ctk.CTkSlider(
+            #     master=self.scrollable_frame, 
+            #     from_=float(range_props[0]), 
+            #     to=float(range_props[1]), 
+            #     number_of_steps=num_of_steps,
+            #     variable=var
+            # )
+            widget = SliderWithLabel(
+                master=self.scrollable_frame, 
+                from_=int(props['range'][0]), 
+                to=int(props['range'][1]), 
+                num_of_steps=num_of_steps,
+                var=var,
+                fg_color="transparent",
+                font=self.my_font
+            )
+
+        elif dtype == 'bool':
+            default_value = str(props['default'])
+            var = ctk.StringVar(value=default_value)
+            widget = ctk.CTkOptionMenu(
+                master=self.scrollable_frame, 
+                variable=var, 
+                values=['True', 'False'],
+                font=self.my_font,
+                dropdown_font=self.my_font,
+                corner_radius=0,
+                anchor=ctk.CENTER,
+                button_color=self.colors['optionmenu']['fg'],
+                button_hover_color=self.colors['optionmenu']['hover'],
+                fg_color=self.colors['optionmenu']['fg'] 
+            )
+        else:
+            raise Exception(f'Unknown Widget Types -> dtype={dtype}, utype={utype} !!')
+        
+        var.trace_add("write", lambda *args: self._on_update_value(key))
+        return widget, var
+
+    def _on_update_value(self, updated_key):
+        print(f'{updated_key} is UPDATED !!')
+        new_value = self._created_map[updated_key]['var'].get()
+        original_value = self._created_map[updated_key]['original_value']
+        if str(new_value) != str(original_value):
+            self._created_map[updated_key]['value_label'].configure(
+                text=str(original_value), text_color='red'
+            )
+        else:
+            self._created_map[updated_key]['value_label'].configure(text='')
+            
+    def _save(self):
+        pass
+
+    def _get_labelframe (self, master_frame: ctk.CTkFrame, label_txt: str):
+        return tkLabelFrame(
+            master=master_frame, text=label_txt, font=self.my_font, 
+            labelanchor=ctk.NW, background=self.colors['fg']
+        )
+
+class SliderWithLabel(ctk.CTkFrame):
+    def __init__(self, master, font, from_=0, to=100, num_of_steps=None, var=None, **kwargs):
+        super().__init__(master, **kwargs)
+
+        self.slider = ctk.CTkSlider(self, from_=from_, to=to, variable=var, command=self.update_label)
+        if num_of_steps:
+            self.slider.configure(number_of_steps=num_of_steps)
+        self.value_label = ctk.CTkLabel(self, text=f"{var.get()}", font=font)
+
+        self.value_label.grid(row=0, column=0, pady=(5, 0))  # Label above slider
+        self.slider.grid(row=1, column=0, padx=10, pady=(0, 5), sticky="ew")
+
+        self.columnconfigure(0, weight=1)  # Center align contents
+
+    def update_label(self, value):
+        self.value_label.configure(text=f"{int(value)}")
+
+
 class DataSetDivFrame:
     def __init__(self, masterFrame: ctk.CTkFrame, my_font: ctk.CTkFont, colors: dict, img_pathsAndSizes: dict):
         self.master = masterFrame

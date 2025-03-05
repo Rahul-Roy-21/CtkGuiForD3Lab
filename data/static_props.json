@@ -1,0 +1,861 @@
+{
+    "app_name": "D3_Lab_CSL",
+    "settings": {
+        "appearence_mode": "light"
+    },
+    "fonts": {
+        "1": {
+            "family": "Caveat",
+            "size": 12,
+            "weight": "normal"
+        }
+    },
+    "colors": {
+        "MEDIUMGREEN_FG": "#218530",
+        "MEDIUMGREEN_HOVER_FG": "#319941",
+        "LIGHTRED_FG": "#c94259",
+        "LIGHTRED_HOVER_FG": "#d9596e",
+        "SKYBLUE_FG": "#E3E4FA",
+        "GREY_HOVER_FG": "#a3a2a3",
+        "GREY_FG": "#6b6a6b",
+        "LIGHT_YELLOW_FG": "#fff1cc"
+    },
+    "algorithm_properties": {
+        "RF": {
+            "hp_optim": {
+                "method": {
+                    "opts": [
+                        "Optuna",
+                        "GridSearchCV",
+                        "RandomizedSearchCV"
+                    ]
+                },
+                "scoring": {
+                    "opts": [
+                        "accuracy",
+                        "balanced_accuracy",
+                        "average_precision",
+                        "f1",
+                        "f1_micro",
+                        "f1_macro",
+                        "f1_weighted",
+                        "precision",
+                        "recall",
+                        "jaccard",
+                        "roc_auc",
+                        "roc_auc_ovr",
+                        "roc_auc_ovo",
+                        "roc_auc_ovr_weighted",
+                        "roc_auc_ovo_weighted"
+                    ]
+                },
+                "cvfolds": {
+                    "min": 2,
+                    "max": 20,
+                    "default": 2
+                },
+                "n_estimators": {
+                    "min_val": 50,
+                    "max_val": 200,
+                    "max_steps": 10,
+                    "default_from": 90,
+                    "default_to": 100,
+                    "default_max_steps": 10
+                },
+                "criterion": {
+                    "options": [
+                        "gini",
+                        "entropy",
+                        "log_loss"
+                    ],
+                    "min_num_of_choices": 2
+                },
+                "max_depth": {
+                    "min_val": 1,
+                    "max_val": 30,
+                    "default_from": 11,
+                    "default_to": 12
+                },
+                "min_samples_split": {
+                    "min_val": 2,
+                    "max_val": 10,
+                    "default_from": 2,
+                    "default_to": 3
+                },
+                "min_samples_leaf": {
+                    "min_val": 1,
+                    "max_val": 10,
+                    "default_from": 1,
+                    "default_to": 2
+                }
+            },
+            "model_build": {
+                "n_estimators": {
+                    "default_val": 100
+                },
+                "criterion": {
+                    "default_idx": 0,
+                    "options": [
+                        "gini",
+                        "entropy",
+                        "log_loss"
+                    ]
+                },
+                "max_depth": {
+                    "default_val": null
+                },
+                "min_samples_split": {
+                    "default_val": 2
+                },
+                "min_samples_leaf": {
+                    "default_val": 1
+                },
+                "min_impurity_decrease": {
+                    "default_val": 0.0
+                },
+                "random_state": {
+                    "default_val": null
+                },
+                "warm_start": {
+                    "default_idx": 1,
+                    "options": [
+                        "True",
+                        "False"
+                    ]
+                },
+                "max_features": {
+                    "default_val": "sqrt"
+                },
+                "min_weight_fraction_leaf": {
+                    "default_val": 0.0
+                },
+                "max_leaf_nodes": {
+                    "default_val": null
+                }
+            }
+        },
+        "SVM": {
+            "hp_optim": {
+                "method": {
+                    "opts": [
+                        "Optuna",
+                        "GridSearchCV",
+                        "RandomizedSearchCV"
+                    ]
+                },
+                "scoring": {
+                    "opts": [
+                        "accuracy",
+                        "balanced_accuracy",
+                        "average_precision",
+                        "f1",
+                        "f1_micro",
+                        "f1_macro",
+                        "f1_weighted",
+                        "precision",
+                        "recall",
+                        "jaccard",
+                        "roc_auc",
+                        "roc_auc_ovr",
+                        "roc_auc_ovo",
+                        "roc_auc_ovr_weighted",
+                        "roc_auc_ovo_weighted"
+                    ]
+                },
+                "cvfolds": {
+                    "min": 3,
+                    "max": 20,
+                    "default": 5
+                },
+                "C": {
+                    "options": [
+                        0.1,
+                        1,
+                        10,
+                        100,
+                        1000,
+                        10000
+                    ],
+                    "min_num_of_choices": 2
+                },
+                "kernel": {
+                    "options": [
+                        "linear",
+                        "poly",
+                        "rbf",
+                        "sigmoid"
+                    ],
+                    "min_num_of_choices": 2
+                },
+                "gamma": {
+                    "options": [
+                        "scale",
+                        "auto"
+                    ],
+                    "min_num_of_choices": 2
+                }
+            },
+            "model_build": {
+                "C": {
+                    "default_val": 1.0
+                },
+                "kernel": {
+                    "default_idx": 2,
+                    "options": [
+                        "linear",
+                        "poly",
+                        "rbf",
+                        "sigmoid"
+                    ]
+                },
+                "degree": {
+                    "default_val": 3
+                },
+                "gamma": {
+                    "default_idx": 0,
+                    "options": [
+                        "scale",
+                        "auto"
+                    ]
+                },
+                "coef0": {
+                    "default_val": 0.0
+                },
+                "tol": {
+                    "default_val": 1e-3
+                },
+                "shrinking": {
+                    "default_idx": 0,
+                    "options": [
+                        "True",
+                        "False"
+                    ]
+                },
+                "probability": {
+                    "default_idx": 0,
+                    "options": [
+                        "True",
+                        "False"
+                    ]
+                },
+                "random_state": {
+                    "default_val": null
+                },
+                "break_ties": {
+                    "default_idx": 1,
+                    "options": [
+                        "True",
+                        "False"
+                    ]
+                },
+                "decision_function_shape": {
+                    "default_idx": 0,
+                    "options": [
+                        "ovr",
+                        "ovo"
+                    ]
+                }
+            }
+        },
+        "LDA": {
+            "hp_optim": {
+                "method": {
+                    "opts": [
+                        "Optuna",
+                        "GridSearchCV",
+                        "RandomizedSearchCV"
+                    ]
+                },
+                "scoring": {
+                    "opts": [
+                        "accuracy",
+                        "balanced_accuracy",
+                        "average_precision",
+                        "f1",
+                        "f1_micro",
+                        "f1_macro",
+                        "f1_weighted",
+                        "precision",
+                        "recall",
+                        "jaccard",
+                        "roc_auc",
+                        "roc_auc_ovr",
+                        "roc_auc_ovo",
+                        "roc_auc_ovr_weighted",
+                        "roc_auc_ovo_weighted"
+                    ]
+                },
+                "cvfolds": {
+                    "min": 3,
+                    "max": 20,
+                    "default": 5
+                },
+                "solver": {
+                    "options": [
+                        "svd",
+                        "lsqr",
+                        "eigen"
+                    ],
+                    "min_num_of_choices": 2
+                }
+            },
+            "model_build": {
+                "solver": {
+                    "default_idx": 0,
+                    "options": [
+                        "svd",
+                        "lsqr",
+                        "eigen"
+                    ]
+                },
+                "shrinkage": {
+                    "default_val": null
+                },
+                "n_components": {
+                    "default_val": null
+                },
+                "tol": {
+                    "default_val": 1e-3
+                },
+                "store_covariance": {
+                    "default_idx": 1,
+                    "options": [
+                        "True",
+                        "False"
+                    ]
+                }
+            }
+        },
+        "LR": {
+            "hp_optim": {
+                "method": {
+                    "opts": [
+                        "Optuna",
+                        "GridSearchCV",
+                        "RandomizedSearchCV"
+                    ]
+                },
+                "scoring": {
+                    "opts": [
+                        "accuracy",
+                        "balanced_accuracy",
+                        "average_precision",
+                        "f1",
+                        "f1_micro",
+                        "f1_macro",
+                        "f1_weighted",
+                        "precision",
+                        "recall",
+                        "jaccard",
+                        "roc_auc",
+                        "roc_auc_ovr",
+                        "roc_auc_ovo",
+                        "roc_auc_ovr_weighted",
+                        "roc_auc_ovo_weighted"
+                    ]
+                },
+                "cvfolds": {
+                    "min": 3,
+                    "max": 20,
+                    "default": 5
+                },
+                "C": {
+                    "options": [
+                        0.1,
+                        1,
+                        10,
+                        100
+                    ],
+                    "min_num_of_choices": 2
+                },
+                "penalty": {
+                    "options": [
+                        "l1",
+                        "l2",
+                        "elasticnet",
+                        "null"
+                    ],
+                    "min_num_of_choices": 2
+                },
+                "solver": {
+                    "options": [
+                        "lbfgs",
+                        "liblinear",
+                        "newton-cg",
+                        "newton-cholesky",
+                        "sag",
+                        "saga"
+                    ],
+                    "min_num_of_choices": 2
+                }
+            },
+            "model_build": {
+                "l1_ratio": {
+                    "default_val": null
+                },
+                "penalty": {
+                    "default_idx": 1,
+                    "options": [
+                        "l1",
+                        "l2",
+                        "elasticnet",
+                        "null"
+                    ]
+                },
+                "tol": {
+                    "default_val": 1e-4
+                },
+                "C": {
+                    "default_val": 1.0
+                },
+                "fit_intercept": {
+                    "default_idx": 0,
+                    "options": [
+                        "True",
+                        "False"
+                    ]
+                },
+                "intercept_scaling": {
+                    "default_val": 1.0
+                },
+                "random_state": {
+                    "default_val": null
+                },
+                "solver": {
+                    "default_idx": 0,
+                    "options": [
+                        "lbfgs",
+                        "liblinear",
+                        "newton-cg",
+                        "newton-cholesky",
+                        "sag",
+                        "saga"
+                    ]
+                },
+                "warm_start": {
+                    "default_idx": 1,
+                    "options": [
+                        "True",
+                        "False"
+                    ]
+                },
+                "max_iter": {
+                    "default_val": 100
+                },
+                "multi_class": {
+                    "default_idx": 0,
+                    "options": [
+                        "auto",
+                        "ovr",
+                        "multinomial"
+                    ]
+                },
+                "n_jobs": {
+                    "default_val": null
+                }
+            }
+        },
+        "KNN": {
+            "hp_optim": {
+                "method": {
+                    "opts": [
+                        "Optuna",
+                        "GridSearchCV",
+                        "RandomizedSearchCV"
+                    ]
+                },
+                "scoring": {
+                    "opts": [
+                        "accuracy",
+                        "balanced_accuracy",
+                        "average_precision",
+                        "f1",
+                        "f1_micro",
+                        "f1_macro",
+                        "f1_weighted",
+                        "precision",
+                        "recall",
+                        "jaccard",
+                        "roc_auc",
+                        "roc_auc_ovr",
+                        "roc_auc_ovo",
+                        "roc_auc_ovr_weighted",
+                        "roc_auc_ovo_weighted"
+                    ]
+                },
+                "cvfolds": {
+                    "min": 3,
+                    "max": 20,
+                    "default": 5
+                },
+                "n_neighbors": {
+                    "min_val": 2,
+                    "max_val": 20,
+                    "default_from": 2,
+                    "default_to": 10
+                },
+                "leaf_size": {
+                    "min_val": 10,
+                    "max_val": 50,
+                    "default_from": 10,
+                    "default_to": 50
+                },
+                "p": {
+                    "min_val": 1,
+                    "max_val": 5,
+                    "default_from": 1,
+                    "default_to": 2
+                }
+            },
+            "model_build": {
+                "n_neighbors": {
+                    "default_val": 5
+                },
+                "weights": {
+                    "default_idx": 0,
+                    "options": [
+                        "uniform",
+                        "distance"
+                    ]
+                },
+                "p": {
+                    "default_val": 2.0
+                },
+                "leaf_size": {
+                    "default_val": 30
+                },
+                "algorithm": {
+                    "default_idx": 0,
+                    "options": [
+                        "auto",
+                        "ball_tree",
+                        "kd_tree",
+                        "brute"
+                    ]
+                },
+                "n_jobs": {
+                    "default_val": null
+                }
+            }
+        },
+        "GB": {
+            "hp_optim": {
+                "method": {
+                    "opts": [
+                        "Optuna",
+                        "GridSearchCV",
+                        "RandomizedSearchCV"
+                    ]
+                },
+                "scoring": {
+                    "opts": [
+                        "accuracy",
+                        "balanced_accuracy",
+                        "average_precision",
+                        "f1",
+                        "f1_micro",
+                        "f1_macro",
+                        "f1_weighted",
+                        "precision",
+                        "recall",
+                        "jaccard",
+                        "roc_auc",
+                        "roc_auc_ovr",
+                        "roc_auc_ovo",
+                        "roc_auc_ovr_weighted",
+                        "roc_auc_ovo_weighted"
+                    ]
+                },
+                "cvfolds": {
+                    "min": 3,
+                    "max": 20,
+                    "default": 5
+                },
+                "n_estimators": {
+                    "min_val": 10,
+                    "max_val": 200,
+                    "max_steps": 10,
+                    "default_from": 10,
+                    "default_to": 200,
+                    "default_max_steps": 10
+                },
+                "criterion": {
+                    "options": [
+                        "friedman_mse",
+                        "squared_error"
+                    ],
+                    "min_num_of_choices": 2
+                },
+                "learning_rate": {
+                    "min_val": 1e-3,
+                    "max_val": 1,
+                    "default_from": 1e-2,
+                    "default_to": 1e-1
+                },
+                "max_depth": {
+                    "min_val": 2,
+                    "max_val": 32,
+                    "default_from": 2,
+                    "default_to": 10
+                },
+                "min_samples_split": {
+                    "min_val": 2,
+                    "max_val": 10,
+                    "default_from": 2,
+                    "default_to": 5
+                },
+                "min_samples_leaf": {
+                    "min_val": 1,
+                    "max_val": 10,
+                    "default_from": 1,
+                    "default_to": 5
+                }
+            },
+            "model_build": {
+                "loss": {
+                    "default_idx": 0,
+                    "options": [
+                        "log_loss",
+                        "exponential"
+                    ]
+                },
+                "learning_rate": {
+                    "default_val": 0.1
+                },
+                "n_estimators": {
+                    "default_val": 100
+                },
+                "subsample": {
+                    "default_val": 0.1
+                },
+                "criterion": {
+                    "default_idx": 0,
+                    "options": [
+                        "friedman_mse",
+                        "squared_error"
+                    ]
+                },
+                "min_samples_split": {
+                    "default_val": 2
+                },
+                "min_samples_leaf": {
+                    "default_val": 1
+                },
+                "min_weight_fraction_leaf": {
+                    "default_val": 0.0
+                },
+                "max_depth": {
+                    "default_val": 3
+                },
+                "min_impurity_decrease": {
+                    "default_val": 0.0
+                },
+                "random_state": {
+                    "default_val": null
+                },
+                "warm_start": {
+                    "default_idx": 1,
+                    "options": [
+                        "True",
+                        "False"
+                    ]
+                },
+                "max_features": {
+                    "default_val": null
+                },
+                "validation_fraction": {
+                    "default_val": 0.1
+                },
+                "n_iter_no_change": {
+                    "default_val": null
+                },
+                "tol": {
+                    "default_val": 1e-4
+                }
+            }
+        },
+        "MLP": {
+            "hp_optim": {
+                "method": {
+                    "opts": [
+                        "Optuna",
+                        "GridSearchCV",
+                        "RandomizedSearchCV"
+                    ]
+                },
+                "scoring": {
+                    "opts": [
+                        "accuracy",
+                        "balanced_accuracy",
+                        "average_precision",
+                        "f1",
+                        "f1_micro",
+                        "f1_macro",
+                        "f1_weighted",
+                        "precision",
+                        "recall",
+                        "jaccard",
+                        "roc_auc",
+                        "roc_auc_ovr",
+                        "roc_auc_ovo",
+                        "roc_auc_ovr_weighted",
+                        "roc_auc_ovo_weighted"
+                    ]
+                },
+                "cvfolds": {
+                    "min": 2,
+                    "max": 20,
+                    "default": 2
+                },
+                "hidden_layer_size": {
+                    "min_val": 50,
+                    "max_val": 300,
+                    "max_steps": 50,
+                    "default_from": 64,
+                    "default_to": 65,
+                    "default_max_steps": 1
+                },
+                "num_of_hidden_layers": {
+                    "min_val": 2,
+                    "max_val": 10,
+                    "default_from": 2,
+                    "default_to": 4
+                },
+                "activation": {
+                    "options": [
+                        "identity",
+                        "logistic",
+                        "tanh",
+                        "relu"
+                    ],
+                    "min_num_of_choices": 2
+                },
+                "solver": {
+                    "options": [
+                        "lbfgs",
+                        "sgd",
+                        "adam"
+                    ],
+                    "min_num_of_choices": 2
+                },
+                "alpha": {
+                    "options": [
+                        0.0001,
+                        0.001,
+                        0.01,
+                        0.1,
+                        1,
+                        10
+                    ],
+                    "min_num_of_choices": 2
+                },
+                "learning_rate": {
+                    "options": [
+                        "constant",
+                        "invscaling",
+                        "adaptive"
+                    ],
+                    "min_num_of_choices": 2
+                }
+            },
+            "model_build": {
+                "hidden_layer_sizes": {
+                    "default_val": "(100,)"
+                },
+                "activation": {
+                    "default_idx": 3,
+                    "options": [
+                        "identity",
+                        "logistic",
+                        "tanh",
+                        "relu"
+                    ]
+                },
+                "solver": {
+                    "default_idx": 2,
+                    "options": [
+                        "lbfgs",
+                        "sgd",
+                        "adam"
+                    ]
+                },
+                "alpha": {
+                    "default_val": 0.0001
+                },
+                "batch_size": {
+                    "default_val": "auto"
+                },
+                "learning_rate": {
+                    "default_idx": 0,
+                    "options": [
+                        "constant",
+                        "invscaling",
+                        "adaptive"
+                    ]
+                },
+                "learning_rate_init": {
+                    "default_val": 0.001
+                },
+                "power_t": {
+                    "default_val": 0.5
+                },
+                "max_iter": {
+                    "default_val": 200
+                },
+                "shuffle": {
+                    "default_idx": 0,
+                    "options": [
+                        "True",
+                        "False"
+                    ]
+                },
+                "random_state": {
+                    "default_val": null
+                },
+                "tol": {
+                    "default_val": 1e-4
+                },
+                "verbose": {
+                    "default_idx": 1,
+                    "options": [
+                        "True",
+                        "False"
+                    ]
+                },
+                "warm_start": {
+                    "default_idx": 1,
+                    "options": [
+                        "True",
+                        "False"
+                    ]
+                },
+                "momentum": {
+                    "default_val": 0.9
+                },
+                "nesterovs_momentum": {
+                    "default_idx": 0,
+                    "options": [
+                        "True",
+                        "False"
+                    ]
+                },
+                "early_stopping": {
+                    "default_idx": 1,
+                    "options": [
+                        "True",
+                        "False"
+                    ]
+                },
+                "validation_fraction": {
+                    "default_val": 0.1
+                },
+                "n_iter_no_change": {
+                    "default_val": 10
+                },
+                "max_fun": {
+                    "default_val": 15000
+                }
+            }
+        }
+    }
+}

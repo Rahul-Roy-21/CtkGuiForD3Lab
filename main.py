@@ -2,23 +2,25 @@ import os
 #import sys
 import customtkinter as ctk
 from PIL import Image, ImageTk
-from data import DATA as CONFIG_DATA
+from constants import my_config_manager, IMG_DIR
 from util.services import *
 from util.gui.panels import *
 from util.gui.labelframes import HyperParamOptim_AlgoLabelFrame, ModelBuild_AlgoLabelFrame, MyRangeEntryField, MultiSelectEntryField, MyStepRangeEntryField, MyLogarithmicRangeEntryField,StringField, OptionMenuField
 
 #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-ctk.set_appearance_mode(CONFIG_DATA["settings"]["appearence_mode"])
+ctk.set_appearance_mode(
+    mode_string = my_config_manager.get("settings.appearence_mode")
+)
 
 root=ctk.CTk()
-root.title(CONFIG_DATA["app_name"])
-root.resizable(False, False)
+root.title(my_config_manager.get("app_name"))
+#root.resizable(False, False)
 root.focus_force()
 root.grid_columnconfigure(tuple(range(1,8)), weight=1) # 8 columns
 root.grid_rowconfigure(tuple(range(2,11)),weight=1) # Only Side_panel and task_panel will expand
 
 # FONTS
-FONT_1_DATA = CONFIG_DATA['fonts']['my_font_1']
+FONT_1_DATA = my_config_manager.get('fonts.1')
 
 MY_FONT_1 = ctk.CTkFont(
     family=FONT_1_DATA["family"], 
@@ -26,26 +28,29 @@ MY_FONT_1 = ctk.CTkFont(
     weight=FONT_1_DATA["weight"], 
 )
 # IMAGES PATH
-RESULTS_LOADING_IMG_PATH = os.path.join('images', 'loading.gif')
-HP_OPTIMIZATION_ONGOING_IMG_PATH = os.path.join('images', 'optimization.gif')
+RESULTS_LOADING_IMG_PATH = os.path.join(IMG_DIR, 'loading.gif')
+HP_OPTIMIZATION_ONGOING_IMG_PATH = os.path.join(IMG_DIR, 'optimization.gif')
 
 UPLOAD_IMG = {
-    'PATH': os.path.join('images', 'upload.png'), 'SIZE': (20,20)
+    'PATH': os.path.join(IMG_DIR, 'upload.png'), 'SIZE': (20,20)
 }
 D3_LAB_LOGO = {
-    'PATH': os.path.join('images', 'logo.png'), 'SIZE': (65,65)
+    'PATH': os.path.join(IMG_DIR, 'banner.png'), 'SIZE': (75,75)
+}
+DEFAULT_BANNER_IMG = {
+    'PATH': os.path.join(IMG_DIR, 'default_panel.png'), 'SIZE': (650,450)
 }
 HP_OPTIM_IMG = {
-    'PATH': os.path.join('images', 'hp_optim.png'), 'SIZE': (40,40)
+    'PATH': os.path.join(IMG_DIR, 'hp_optim.png'), 'SIZE': (40,40)
 }
 MODEL_BUILD_IMG = {
-    'PATH': os.path.join('images', 'model_build.png'), 'SIZE': (40,40)
+    'PATH': os.path.join(IMG_DIR, 'model_build.png'), 'SIZE': (40,40)
 }
 DATASET_DIV_IMG = {
-    'PATH': os.path.join('images', 'dataset_division.png'), 'SIZE': (40,40)
+    'PATH': os.path.join(IMG_DIR, 'dataset_division.png'), 'SIZE': (40,40)
 }
 SETTINGS_IMG = {
-    'PATH': os.path.join('images', 'settings.png'), 'SIZE': (30,30)
+    'PATH': os.path.join(IMG_DIR, 'settings.png'), 'SIZE': (30,30)
 }
 
 
@@ -54,7 +59,7 @@ ALL_LOADED_FEATURES = ctk.StringVar()
 SELECTED_FEATURES = ctk.StringVar()
 TRAIN_FILE_PATH = ctk.StringVar()
 TEST_FILE_PATH = ctk.StringVar()
-COLORS = CONFIG_DATA['colors']
+COLORS = my_config_manager.get('colors')
 ALGO_MAP = {
     'RF': {
         'algo_name': 'Random Forest', 
@@ -162,6 +167,14 @@ DataSetDivFrame(
     }
 )
 
+# Default Panel
+default_panel = taskPanelMap['default']
+default_panel.grid_rowconfigure(0, weight=1)
+default_panel.grid_columnconfigure(0, weight=1)
+default_panel_image = ctk.CTkImage(light_image=Image.open(DEFAULT_BANNER_IMG['PATH']), size=DEFAULT_BANNER_IMG['SIZE'])
+default_panel_label = ctk.CTkLabel(default_panel, image=default_panel_image, text="")
+default_panel_label.grid(row=0, column=0, sticky=ctk.NSEW)
+
 # HP_OPTIM_PANEL------------------------------------------------------------------------------------------
 hyperparam_optim_panel = taskPanelMap['hp_optim']
 
@@ -180,7 +193,7 @@ hp_optim_featureAndAlgoSelectFrame = FeatureAndAlgorithmFrame(
     TEST_FILE_PATH=TEST_FILE_PATH
 )
 
-RF_HP_OPTIM_DATA = DATA['algorithm_properties']['RF']['hp_optim']
+RF_HP_OPTIM_DATA = my_config_manager.get('algorithm_properties.RF.hp_optim')
 RF_HP_OPTIM_DATA_AND_VARS = {
     'method_opts': RF_HP_OPTIM_DATA['method']['opts'],
     'method_selected_optVar': ctk.StringVar(value=RF_HP_OPTIM_DATA['method']['opts'][0]),
@@ -253,7 +266,7 @@ RF_hp_optim_panel = HyperParamOptim_AlgoLabelFrame(
 )._GET_ALGO_LABELFRAME()
 
 #SVM
-SVM_HP_OPTIM_DATA = DATA['algorithm_properties']['SVM']['hp_optim']
+SVM_HP_OPTIM_DATA = my_config_manager.get('algorithm_properties.SVM.hp_optim')
 SVM_HP_OPTIM_DATA_AND_VARS = {
     'method_opts': SVM_HP_OPTIM_DATA['method']['opts'],
     'method_selected_optVar': ctk.StringVar(value=SVM_HP_OPTIM_DATA['method']['opts'][0]),
@@ -267,7 +280,7 @@ SVM_HP_OPTIM_DATA_AND_VARS = {
         'C': {
             'type': MultiSelectEntryField(
                 options=SVM_HP_OPTIM_DATA['C']['options'],
-                selected_opt_var=ctk.StringVar(value=','.join(SVM_HP_OPTIM_DATA['C']['options']))
+                selected_opt_var=ctk.StringVar(value=','.join(list(map(str, SVM_HP_OPTIM_DATA['C']['options']))))
             ),
             'grid': {'row':0,'col':0,'colspan':1}
         },
@@ -301,7 +314,7 @@ SVM_hp_optim_panel = HyperParamOptim_AlgoLabelFrame(
 )._GET_ALGO_LABELFRAME()
 
 #LDA
-LDA_HP_OPTIM_DATA = DATA['algorithm_properties']['LDA']['hp_optim']
+LDA_HP_OPTIM_DATA = my_config_manager.get('algorithm_properties.LDA.hp_optim')
 LDA_HP_OPTIM_DATA_AND_VARS = {
     'method_opts': LDA_HP_OPTIM_DATA['method']['opts'],
     'method_selected_optVar': ctk.StringVar(value=LDA_HP_OPTIM_DATA['method']['opts'][0]),
@@ -335,7 +348,7 @@ LDA_hp_optim_panel = HyperParamOptim_AlgoLabelFrame(
 )._GET_ALGO_LABELFRAME()
 
 #LR
-LR_HP_OPTIM_DATA = DATA['algorithm_properties']['LR']['hp_optim']
+LR_HP_OPTIM_DATA = my_config_manager.get('algorithm_properties.LR.hp_optim')
 LR_HP_OPTIM_DATA_AND_VARS = {
     'method_opts': LR_HP_OPTIM_DATA['method']['opts'],
     'method_selected_optVar': ctk.StringVar(value=LR_HP_OPTIM_DATA['method']['opts'][0]),
@@ -349,7 +362,7 @@ LR_HP_OPTIM_DATA_AND_VARS = {
         'C': {
             'type': MultiSelectEntryField(
                 options=LR_HP_OPTIM_DATA['C']['options'],
-                selected_opt_var=ctk.StringVar(value=','.join(LR_HP_OPTIM_DATA['C']['options']))
+                selected_opt_var=ctk.StringVar(value=','.join(list(map(str, LR_HP_OPTIM_DATA['C']['options']))))
             ),
             'grid': {'row':0,'col':0,'colspan':1}
         },
@@ -383,7 +396,7 @@ LR_hp_optim_panel = HyperParamOptim_AlgoLabelFrame(
 )._GET_ALGO_LABELFRAME()
 
 #KNN
-KNN_HP_OPTIM_DATA = DATA['algorithm_properties']['KNN']['hp_optim']
+KNN_HP_OPTIM_DATA = my_config_manager.get('algorithm_properties.KNN.hp_optim')
 KNN_HP_OPTIM_DATA_AND_VARS = {
     'method_opts': KNN_HP_OPTIM_DATA['method']['opts'],
     'method_selected_optVar': ctk.StringVar(value=KNN_HP_OPTIM_DATA['method']['opts'][0]),
@@ -437,7 +450,7 @@ KNN_hp_optim_panel = HyperParamOptim_AlgoLabelFrame(
 )._GET_ALGO_LABELFRAME()
 
 #GB
-GB_HP_OPTIM_DATA = DATA['algorithm_properties']['GB']['hp_optim']
+GB_HP_OPTIM_DATA = my_config_manager.get('algorithm_properties.GB.hp_optim')
 GB_HP_OPTIM_DATA_AND_VARS = {
     'method_opts': GB_HP_OPTIM_DATA['method']['opts'],
     'method_selected_optVar': ctk.StringVar(value=GB_HP_OPTIM_DATA['method']['opts'][0]),
@@ -517,7 +530,7 @@ GB_hp_optim_panel = HyperParamOptim_AlgoLabelFrame(
     hyperParamsFrame_NumOfCells=1
 )._GET_ALGO_LABELFRAME()
 
-MLP_HP_OPTIM_DATA = DATA['algorithm_properties']['MLP']['hp_optim']
+MLP_HP_OPTIM_DATA = my_config_manager.get('algorithm_properties.MLP.hp_optim')
 MLP_HP_OPTIM_DATA_AND_VARS = {
     'method_opts': MLP_HP_OPTIM_DATA['method']['opts'],
     'method_selected_optVar': ctk.StringVar(value=MLP_HP_OPTIM_DATA['method']['opts'][0]),
@@ -565,7 +578,7 @@ MLP_HP_OPTIM_DATA_AND_VARS = {
         'alpha': {
             'type': MultiSelectEntryField(
                 options=MLP_HP_OPTIM_DATA['alpha']['options'],
-                selected_opt_var=ctk.StringVar(value=','.join(MLP_HP_OPTIM_DATA['alpha']['options']))
+                selected_opt_var=ctk.StringVar(value=','.join(list(map(str, MLP_HP_OPTIM_DATA['alpha']['options']))))
             ),
             'grid': {'row':2,'col':0,'colspan':1}
         },
@@ -628,7 +641,7 @@ model_build_featureAndAlgoSelectFrame = FeatureAndAlgorithmFrame(
     TEST_FILE_PATH=TEST_FILE_PATH
 )
 
-RF_MODEL_BUILD_DATA = DATA['algorithm_properties']['RF']['model_build']
+RF_MODEL_BUILD_DATA = my_config_manager.get('algorithm_properties.RF.model_build')
 RF_MODEL_BUILD_DATA_AND_VARS = CREATE_DATA_AND_VARS_MAP_FOR_MODEL_BUILD(RF_MODEL_BUILD_DATA)
 
 RF_model_build_panel = ModelBuild_AlgoLabelFrame(
@@ -645,7 +658,7 @@ RF_model_build_panel = ModelBuild_AlgoLabelFrame(
 )._GET_ALGO_LABELFRAME()
 
 #SVM
-SVM_MODEL_BUILD_DATA = DATA['algorithm_properties']['SVM']['model_build']
+SVM_MODEL_BUILD_DATA = my_config_manager.get('algorithm_properties.SVM.model_build')
 SVM_MODEL_BUILD_DATA_AND_VARS = CREATE_DATA_AND_VARS_MAP_FOR_MODEL_BUILD(SVM_MODEL_BUILD_DATA)
 
 SVM_model_build_panel = ModelBuild_AlgoLabelFrame(
@@ -662,7 +675,7 @@ SVM_model_build_panel = ModelBuild_AlgoLabelFrame(
 )._GET_ALGO_LABELFRAME()
 
 #LDA
-LDA_MODEL_BUILD_DATA = DATA['algorithm_properties']['LDA']['model_build']
+LDA_MODEL_BUILD_DATA = my_config_manager.get('algorithm_properties.LDA.model_build')
 LDA_MODEL_BUILD_DATA_AND_VARS = CREATE_DATA_AND_VARS_MAP_FOR_MODEL_BUILD(LDA_MODEL_BUILD_DATA, numOfFieldsPerRow=3)
 
 LDA_model_build_panel = ModelBuild_AlgoLabelFrame(
@@ -679,7 +692,7 @@ LDA_model_build_panel = ModelBuild_AlgoLabelFrame(
 )._GET_ALGO_LABELFRAME()
 
 #LR
-LR_MODEL_BUILD_DATA = DATA['algorithm_properties']['LR']['model_build']
+LR_MODEL_BUILD_DATA = my_config_manager.get('algorithm_properties.LR.model_build')
 LR_MODEL_BUILD_DATA_AND_VARS = CREATE_DATA_AND_VARS_MAP_FOR_MODEL_BUILD(LR_MODEL_BUILD_DATA, numOfFieldsPerRow=4)
 
 LR_model_build_panel = ModelBuild_AlgoLabelFrame(
@@ -696,7 +709,7 @@ LR_model_build_panel = ModelBuild_AlgoLabelFrame(
 )._GET_ALGO_LABELFRAME()
 
 #KNN
-KNN_MODEL_BUILD_DATA = DATA['algorithm_properties']['KNN']['model_build']
+KNN_MODEL_BUILD_DATA = my_config_manager.get('algorithm_properties.KNN.model_build')
 KNN_MODEL_BUILD_DATA_AND_VARS = CREATE_DATA_AND_VARS_MAP_FOR_MODEL_BUILD(KNN_MODEL_BUILD_DATA, numOfFieldsPerRow=4)
 
 KNN_model_build_panel = ModelBuild_AlgoLabelFrame(
@@ -714,7 +727,7 @@ KNN_model_build_panel = ModelBuild_AlgoLabelFrame(
 
 
 #GB
-GB_MODEL_BUILD_DATA = DATA['algorithm_properties']['GB']['model_build']
+GB_MODEL_BUILD_DATA = my_config_manager.get('algorithm_properties.GB.model_build')
 GB_MODEL_BUILD_DATA_AND_VARS = CREATE_DATA_AND_VARS_MAP_FOR_MODEL_BUILD(GB_MODEL_BUILD_DATA, numOfFieldsPerRow=4)
 
 GB_model_build_panel = ModelBuild_AlgoLabelFrame(
@@ -731,7 +744,7 @@ GB_model_build_panel = ModelBuild_AlgoLabelFrame(
 )._GET_ALGO_LABELFRAME()
 
 #MLP
-MLP_MODEL_BUILD_DATA = DATA['algorithm_properties']['MLP']['model_build']
+MLP_MODEL_BUILD_DATA = my_config_manager.get('algorithm_properties.MLP.model_build')
 MLP_MODEL_BUILD_DATA_AND_VARS = CREATE_DATA_AND_VARS_MAP_FOR_MODEL_BUILD(MLP_MODEL_BUILD_DATA, numOfFieldsPerRow=4)
 
 MLP_model_build_panel = ModelBuild_AlgoLabelFrame(
@@ -797,5 +810,17 @@ showAlgoLabelFrame_ForOption_InTaskPanel(ALGO_LB_FRAMES['hp_optim'], 'RF')
 MODEL_BUILD_SELECTED_ALGORITHM.set(ALGO_MAP['RF']['algo_name'])
 showAlgoLabelFrame_ForOption_InTaskPanel(ALGO_LB_FRAMES['model_build'], 'RF')
 
-root.mainloop()
+# Settings Panel
+settings_panel = taskPanelMap['settings']
+SettingsFrame(
+    masterFrame=settings_panel,
+    my_font=MY_FONT_1,
+    colors={
+        'fg': COLORS['SKYBLUE_FG'], 
+        'save_btn': {'fg': COLORS['MEDIUMGREEN_FG'], 'hover': COLORS['MEDIUMGREEN_HOVER_FG']},
+        'reset_btn': {'fg': COLORS['GREY_FG'], 'hover': COLORS['GREY_HOVER_FG']},
+        'optionmenu': {'fg': COLORS['GREY_FG'], 'hover': COLORS['GREY_HOVER_FG']},
+    }
+)
 
+root.mainloop()
