@@ -33,15 +33,15 @@ from constants import my_config_manager, OUT_DIR
 from json import dumps as jsonDumps
 from util.gui.widgets import InProgressWindow
 
-matplotlib.use('Agg')
-
-PLOT_PROPS = my_config_manager.get('plot_properties')
-OPTUNA_TOTAL_TRIALS = my_config_manager.get('optuna.total_trials')
-
 # Set global font properties
-matplotlib.rcParams['font.family'] = PLOT_PROPS['RC_PARAMS']['FONT_STYLE']
-matplotlib.rcParams['font.size'] = PLOT_PROPS['RC_PARAMS']['FONT_SIZE']
-matplotlib.rcParams['font.weight'] = PLOT_PROPS['RC_PARAMS']['FONT_WEIGHT'] 
+def setup_Matplotlib_globalFontSettings(func):
+    def wrapper(*args, **kwargs):
+        matplotlib.use('Agg')
+        matplotlib.rcParams['font.family'] = my_config_manager.get('plot_properties.RC_PARAMS.FONT_STYLE')
+        matplotlib.rcParams['font.size'] = my_config_manager.get('plot_properties.RC_PARAMS.FONT_SIZE')
+        matplotlib.rcParams['font.weight'] = my_config_manager.get('plot_properties.RC_PARAMS.FONT_WEIGHT')
+        return func(*args, **kwargs)  # Call the original function
+    return wrapper
 
 def CHECK_DIR(output_dir):
     if not os.path.exists(output_dir):
@@ -317,7 +317,9 @@ def _UPDATE_FONT_PROPERTIES(fig: plotly_figure, font_settings: dict, title_setti
         yaxis_tickfont=font_settings
     )
 
+@setup_Matplotlib_globalFontSettings
 def OPTUNA_GENERATE_PLOTS (study: optuna.study.Study, algo_name: str):
+    PLOT_PROPS = my_config_manager.get('plot_properties')
     font_settings = dict(family=PLOT_PROPS['RC_PARAMS']['FONT_STYLE'], size=PLOT_PROPS['RC_PARAMS']['FONT_SIZE'])
     title_settings = dict(family=PLOT_PROPS['TITLE']['FONT_STYLE'], size=PLOT_PROPS['TITLE']['FONT_SIZE'])
 
@@ -398,8 +400,10 @@ def OPTUNA_GENERATE_PLOTS (study: optuna.study.Study, algo_name: str):
     CHECK_DIR(OUT_DIR)
     pio.write_image(fig5, f'output/{algo_name}_contour.png', format='png', scale=2)
 
+@setup_Matplotlib_globalFontSettings
 def SHAP_GENERATE_PLOT (model, X_train: pd.DataFrame, y_train: pd.DataFrame, model_algorithm: str, 
     inProgressUpdateFunc: Callable[[str], None]):
+    PLOT_PROPS = my_config_manager.get('plot_properties')
     # SHAP outputs
     SHAP_CONFIGS = PLOT_PROPS['SHAP']
     if not SHAP_CONFIGS['ENABLED']:
@@ -507,6 +511,7 @@ def SHAP_GENERATE_PLOT (model, X_train: pd.DataFrame, y_train: pd.DataFrame, mod
     )
     plt.close(fig)
 
+@setup_Matplotlib_globalFontSettings
 def MODEL_BUILD_GENERATE_RESULTS (regressor, featureList: list, trainFilePath: str, testFilePath: str, regressorName: str, inProgressUpdateFunc: Callable[[str], None]) -> dict:
     trainDF = pd.read_excel(trainFilePath)
     testDF = pd.read_excel(testFilePath)
@@ -576,6 +581,7 @@ def MODEL_BUILD_GENERATE_RESULTS (regressor, featureList: list, trainFilePath: s
             my_file_rfr.write(str(output) + '\n')
 
     inProgressUpdateFunc('Generating\nPlots..')
+    PLOT_PROPS = my_config_manager.get('plot_properties')
     # GENERATE <>_RocCurve_Test.png
     roc_te = RocCurveDisplay.from_estimator(regressor, x_test, y_test)
     plt.clf()
@@ -753,8 +759,9 @@ def RF_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
         
         IN_PROGRESS._CREATE_OPTUNA_PROGRESS()
         rf_study = optuna.create_study(direction='maximize', study_name='Random_Forest')
+        print(my_config_manager.get('optuna.total_trials'))
         rf_study.optimize(
-            func=RF_OBJECTIVE, n_trials=OPTUNA_TOTAL_TRIALS, callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
+            func=RF_OBJECTIVE, n_trials=my_config_manager.get('optuna.total_trials'), callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
         )
         IN_PROGRESS._COMPLETE_OPTUNA_PROGRESS()
         results = rf_study.best_params
@@ -861,7 +868,7 @@ def SVM_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
         IN_PROGRESS._CREATE_OPTUNA_PROGRESS()
         svm_study = optuna.create_study(direction='maximize', study_name='SupportVectorMachine')
         svm_study.optimize(
-            func=SVM_OBJECTIVE, n_trials=OPTUNA_TOTAL_TRIALS, callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
+            func=SVM_OBJECTIVE, n_trials=my_config_manager.get('optuna.total_trials'), callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
         )
         IN_PROGRESS._COMPLETE_OPTUNA_PROGRESS()
         results = svm_study.best_params
@@ -965,7 +972,7 @@ def LDA_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
         IN_PROGRESS._CREATE_OPTUNA_PROGRESS()
         lda_study = optuna.create_study(direction='maximize', study_name='LinearDiscriminantAnalysis')
         lda_study.optimize(
-            func=LDA_OBJECTIVE, n_trials=OPTUNA_TOTAL_TRIALS*10, callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
+            func=LDA_OBJECTIVE, n_trials=my_config_manager.get('optuna.total_trials')*10, callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
         )
         IN_PROGRESS._COMPLETE_OPTUNA_PROGRESS()
         results = lda_study.best_params
@@ -1090,7 +1097,7 @@ def LR_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
         IN_PROGRESS._CREATE_OPTUNA_PROGRESS()
         lr_study = optuna.create_study(direction='maximize', study_name='LogisticRegression')
         lr_study.optimize(
-            func=LR_OBJECTIVE, n_trials=OPTUNA_TOTAL_TRIALS*10, callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
+            func=LR_OBJECTIVE, n_trials=my_config_manager.get('optuna.total_trials')*10, callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
         )
         IN_PROGRESS._COMPLETE_OPTUNA_PROGRESS()
         results = lr_study.best_params
@@ -1200,7 +1207,7 @@ def KNN_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
         IN_PROGRESS._CREATE_OPTUNA_PROGRESS()
         knn_study = optuna.create_study(direction='maximize', study_name='KNearestNeighbors')
         knn_study.optimize(
-            func=KNN_OBJECTIVE, n_trials=OPTUNA_TOTAL_TRIALS*10, callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
+            func=KNN_OBJECTIVE, n_trials=my_config_manager.get('optuna.total_trials')*10, callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
         )
         IN_PROGRESS._COMPLETE_OPTUNA_PROGRESS()
         results = knn_study.best_params
@@ -1329,7 +1336,7 @@ def GB_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
         IN_PROGRESS._CREATE_OPTUNA_PROGRESS()
         gb_study = optuna.create_study(direction='maximize', study_name='GradientBoosting')
         gb_study.optimize(
-            func=GB_OBJECTIVE, n_trials=OPTUNA_TOTAL_TRIALS, callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
+            func=GB_OBJECTIVE, n_trials=my_config_manager.get('optuna.total_trials'), callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
         )
         IN_PROGRESS._COMPLETE_OPTUNA_PROGRESS()
         results = gb_study.best_params
@@ -1485,7 +1492,7 @@ def MLP_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
         IN_PROGRESS._CREATE_OPTUNA_PROGRESS()
         mlp_study = optuna.create_study(direction='maximize', study_name='MLP')
         mlp_study.optimize(
-            func=MLP_OBJECTIVE, n_trials=OPTUNA_TOTAL_TRIALS, callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
+            func=MLP_OBJECTIVE, n_trials=my_config_manager.get('optuna.total_trials'), callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
         )
         IN_PROGRESS._COMPLETE_OPTUNA_PROGRESS()
         results = mlp_study.best_params

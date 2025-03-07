@@ -7,7 +7,6 @@ import optuna
 import time
 
 COLORS = my_config_manager.get('colors')
-OPTUNA_TOTAL_TRIALS = my_config_manager.get('optuna.total_trials')
 
 def getImgPath (img_name, image_dir=IMG_DIR):
     return os_path.join(image_dir, img_name)
@@ -56,6 +55,7 @@ class FeatureSelectEntry(CTkFrame):
                 my_font=self.my_font 
             )
         except Exception as ex:
+            #traceback.print_exc()
             CustomWarningBox(self, [ex], self.my_font)
 
 class MultiSelectEntry(CTkFrame):
@@ -420,6 +420,15 @@ class RankedFeaturesSelectDialog(CTkToplevel):
             loaded_ranked_features :list[dict], selected_features_var: StringVar, 
             my_font:CTkFont, MIN_CHOOSE: int = 2
         ):
+        self.ranked_features_dicts = loaded_ranked_features
+        self.selected_features_var = selected_features_var
+        self.selected_features = selected_features_var.get().split(',')
+        self.MIN_CHOOSE=my_config_manager.get('feature_selection.min_features_selected')
+        self.feature_ranking_method = my_config_manager.get('feature_selection.ranking_method')
+        # CHECK if feature_ranking_method has changed.. if so, ask to reload datasets to re-perform GET_RANGED_FEATURES
+        if not (self.feature_ranking_method in self.ranked_features_dicts[0].keys() and self.MIN_CHOOSE <= len(self.selected_features)): 
+            raise Exception('Feature Ranking Configs have changed !!\nPlease re-upload the datasets..')
+
         super().__init__(parent)
         self.title('Features Selection')
         self.geometry("430x565")
@@ -428,13 +437,8 @@ class RankedFeaturesSelectDialog(CTkToplevel):
         self.grid_rowconfigure(0, weight=1)
         self.configure(fg_color=COLORS['SKYBLUE_FG'])
         #self.bind("<Configure>", self.on_resize)
-        self.ranked_features_dicts = loaded_ranked_features
-        self.selected_features_var = selected_features_var
-        self.selected_features = selected_features_var.get().split(',')
         self.my_font = my_font
-        self.MIN_CHOOSE=MIN_CHOOSE
 
-        self.feature_ranking_method = my_config_manager.get('feature_selection.ranking_method')
         if self.feature_ranking_method=='MDF':
             self.feature_ranking_method_column = 'Absolute Mean Diff.(MDF)' 
         elif self.feature_ranking_method=='MIS': 
@@ -824,6 +828,7 @@ class InProgressWindow:
         if not self.created_optuna_progress:
             raise Exception('Cannot update Optuna Progress as it is not created !!')
         
+        OPTUNA_TOTAL_TRIALS = my_config_manager.get('optuna.total_trials')
         print('[_UPDATE_OPTUNA_PROGRESS_BAR]...', trial.state, self.non_pruned_trials)
         if trial.state == optuna.trial.TrialState.COMPLETE:
             self.non_pruned_trials += 1
@@ -847,23 +852,6 @@ class InProgressWindow:
                 text=f"Trials: {self.non_pruned_trials}/{OPTUNA_TOTAL_TRIALS} [{len(study.trials)}]"
             )
 
-        self.parent.update_idletasks()
-
-    # Callback function to update the progress bar and text
-    def _UPDATE_OPTUNA_PROGRESS_BAR_WITHOUT_PRUNING (self, study, trial):
-        print('[_UPDATE_OPTUNA_PROGRESS_BAR]')
-        if not self.created_optuna_progress:
-            raise Exception('Cannot update Optuna Progress as it is not created !!')
-        
-        print('[_UPDATE_OPTUNA_PROGRESS_BAR]...')
-        progress = len(study.trials) / OPTUNA_TOTAL_TRIALS
-        self.progress_bar.set(progress)
-        self.trial_status_label.configure(text=f"Trial {len(study.trials)}/{OPTUNA_TOTAL_TRIALS}")
-        
-        # Update best trial info
-        if study.best_trial:
-            best_score = study.best_value
-            self.best_trial_label.configure(text=f"Best Score: {best_score:.4f} (Trial {study.best_trial.number})")
         self.parent.update_idletasks()
 
     def _COMPLETE_OPTUNA_PROGRESS (self):

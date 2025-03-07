@@ -604,17 +604,19 @@ class SliderWithLabel(ctk.CTkFrame):
             num_of_steps = int((_to-_from)/_steps) + 1
 
         self.slider = ctk.CTkSlider(self, from_=_from, to=_to, number_of_steps=num_of_steps, variable=var, command=self.update_label)
+        self.var.trace_add("write", self.sync_var_to_slider_label)
 
         self.value_label = ctk.CTkLabel(self, text=f"{var.get()}", font=font)
         self.value_label.grid(row=0, column=0, pady=(5, 0))  # Label above slider
         self.slider.grid(row=1, column=0, padx=10, pady=(0, 5), sticky="ew")
-
         self.columnconfigure(0, weight=1)  # Center align contents
 
     def update_label(self, value):
         rounded_val = round(value,self.dp)
         print('update_label', rounded_val)
         self.var.set(rounded_val)
+
+    def sync_var_to_slider_label(self, *args):
         self.value_label.configure(text=f"{self.var.get()}")
 
 

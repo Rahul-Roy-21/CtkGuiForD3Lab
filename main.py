@@ -810,17 +810,39 @@ showAlgoLabelFrame_ForOption_InTaskPanel(ALGO_LB_FRAMES['hp_optim'], 'RF')
 MODEL_BUILD_SELECTED_ALGORITHM.set(ALGO_MAP['RF']['algo_name'])
 showAlgoLabelFrame_ForOption_InTaskPanel(ALGO_LB_FRAMES['model_build'], 'RF')
 
-# Settings Panel
+# Settings Panel [Created only when 1st time we need settings... time-taking]
 settings_panel = taskPanelMap['settings']
-SettingsFrame(
-    masterFrame=settings_panel,
-    my_font=MY_FONT_1,
-    colors={
-        'fg': COLORS['SKYBLUE_FG'], 
-        'save_btn': {'fg': COLORS['MEDIUMGREEN_FG'], 'hover': COLORS['MEDIUMGREEN_HOVER_FG']},
-        'reset_btn': {'fg': COLORS['GREY_FG'], 'hover': COLORS['GREY_HOVER_FG']},
-        'optionmenu': {'fg': COLORS['GREY_FG'], 'hover': COLORS['GREY_HOVER_FG']},
-    }
-)
+settingsFrame = None
+
+def generate_settings_frame():
+    global settingsFrame
+    loader = InProgressWindow(parent=root, font=MY_FONT_1, gif_path=RESULTS_LOADING_IMG_PATH)
+    loader.create()
+    loader.update_progress_verdict('Creating Settings Panel..')
+
+    def create_frame():
+        global settingsFrame
+        settingsFrame = SettingsFrame(
+            masterFrame=settings_panel,
+            my_font=MY_FONT_1,
+            colors={
+                'fg': COLORS['SKYBLUE_FG'], 
+                'save_btn': {'fg': COLORS['MEDIUMGREEN_FG'], 'hover': COLORS['MEDIUMGREEN_HOVER_FG']},
+                'reset_btn': {'fg': COLORS['GREY_FG'], 'hover': COLORS['GREY_HOVER_FG']},
+                'optionmenu': {'fg': COLORS['GREY_FG'], 'hover': COLORS['GREY_HOVER_FG']},
+            }
+        )
+        loader.destroy()  # Ensure loader is destroyed after frame creation
+    # Ensure GUI update happens in the main thread
+    root.after(0, create_frame)
+
+def create_settings_panel():
+    global settingsFrame
+    if settingsFrame:
+        return
+    print('creating settings')
+    Thread(target=generate_settings_frame).start()
+
+taskSelectBtns['settings'].bind("<Button-1>", lambda ev: create_settings_panel())
 
 root.mainloop()
