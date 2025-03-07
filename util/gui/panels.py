@@ -397,10 +397,12 @@ class SettingsFrame:
         # CREATE WIDGETS -> get the number of rows (num of configurable props)
         # LAYOUT ->   [name](1) : [widget] [current_val_in_db] (2) 
         self.scrollable_frame = ctk.CTkScrollableFrame(
-            self.settings_mainframe, fg_color=colors['fg']
+            self.settings_mainframe, fg_color=colors['fg'], width=750, height=500
         )
         self.scrollable_frame.grid(row=0, column=0, columnspan=2, padx=5, pady=5, sticky=ctk.NSEW)
         self.scrollable_frame.grid_columnconfigure(tuple(range(3)), weight=1)
+
+        self._created_map = {}  # KEY -> (var, settings_cur_value_label, original_value)
         self._create_widgets() # Inside SCROLLABLE FRAME 
 
         # 2 buttons - Discard all changes and Save Updates
@@ -413,7 +415,7 @@ class SettingsFrame:
             text_color='white',
             corner_radius=0,
             border_spacing=0,
-            command=self._save
+            command=self._reset
         )  
         self.reset_btn.grid(row=1, column=0, padx=10, pady=5, sticky=ctk.NSEW)
 
@@ -430,10 +432,15 @@ class SettingsFrame:
         )  
         self.save_btn.grid(row=1, column=1, padx=15, pady=5, sticky=ctk.NSEW)
 
+    def _reset(self):
+        for valueMap in self._created_map.values():
+            valueMap['var'].set(value=valueMap['original_value'])
+            valueMap['value_label'].configure(text="")
+        print('RESET done !!')
+
     def _create_widgets(self):
         #ctk.CTkLabel(self.scrollable_frame, text="scrollable").grid(row=0,column=0)
         sorted_configurable_setting_keys = my_config_manager.get_sorted_setting_keys()
-        self._created_map = {}  # KEY -> (var, settings_cur_value_label, original_value)
         for rowIdx, key in enumerate(sorted_configurable_setting_keys):
             settings_label = ctk.CTkLabel(self.scrollable_frame, text=key+" :", font=self.my_font)
             settings_label.grid(row=rowIdx, column=0, padx=5, pady=5, sticky=ctk.E)
@@ -450,12 +457,11 @@ class SettingsFrame:
             }
 
     def _create_widget_from_props (self, key: str, props: dict):
-        print('KEY: ', key, ', WIDGET: ', props)
+        #print('KEY: ', key, ', WIDGET: ', props)
         dtype, utype = props['dtype'], props.get('utype', None)
         
         if dtype == 'str' and utype == 'menu':
-            options, default_option_idx = props['options'], props['default']
-            default_value = options[default_option_idx % len(options)]
+            default_value = my_config_manager.get(key)
             var = ctk.StringVar(value=default_value)
             widget = ctk.CTkOptionMenu(
                 master=self.scrollable_frame, 
@@ -471,7 +477,7 @@ class SettingsFrame:
             )
 
         elif dtype == 'str' and utype == 'var':
-            default_value = props['value']
+            default_value = my_config_manager.get(key)
             var = ctk.StringVar(value=default_value)
             widget = ctk.CTkEntry(
                 master=self.scrollable_frame, 
@@ -482,8 +488,7 @@ class SettingsFrame:
             )
 
         elif dtype == 'int' and utype == 'menu':
-            options, default_option_idx = props['options'], props['default']
-            default_value = options[default_option_idx % len(options)]
+            default_value = my_config_manager.get(key)
             var = ctk.IntVar(value=default_value)
             widget = ctk.CTkOptionMenu(
                 master=self.scrollable_frame, 
@@ -499,51 +504,35 @@ class SettingsFrame:
             )
 
         elif dtype == 'int' and utype == 'var':
-            default_value = props['default']
+            default_value = my_config_manager.get(key)
             var = ctk.IntVar(value=default_value)
-            # widget = ctk.CTkSlider(
-            #     master=self.scrollable_frame, 
-            #     from_=int(props['range'][0]), 
-            #     to=int(props['range'][1]), 
-            #     variable=var
-            # )
             widget = SliderWithLabel(
-                master=self.scrollable_frame, 
-                from_=int(props['range'][0]), 
-                to=int(props['range'][1]), 
-                var=var,
-                fg_color="transparent",
-                font=self.my_font
+                master=self.scrollable_frame, fg_color='transparent',
+                font=self.my_font, var=var, dtype="int",
+                _from=props['range'][0], 
+                _to=props['range'][1]
             )
 
         elif dtype == 'float' and utype == 'var':
-            default_value = props['default']
+            default_value = my_config_manager.get(key)
             range_props = props['range']
-            num_of_steps = int((range_props[1]-range_props[0]+range_props[2]) / range_props[2])
+            num_of_steps = int((range_props[1]-range_props[0]) / range_props[2]) + 1
+            print(num_of_steps)
             var = ctk.DoubleVar(value=default_value)
-            # widget = ctk.CTkSlider(
-            #     master=self.scrollable_frame, 
-            #     from_=float(range_props[0]), 
-            #     to=float(range_props[1]), 
-            #     number_of_steps=num_of_steps,
-            #     variable=var
-            # )
             widget = SliderWithLabel(
-                master=self.scrollable_frame, 
-                from_=int(props['range'][0]), 
-                to=int(props['range'][1]), 
-                num_of_steps=num_of_steps,
-                var=var,
-                fg_color="transparent",
-                font=self.my_font
+                master=self.scrollable_frame, fg_color='transparent',
+                font=self.my_font, var=var, dtype="float",
+                _from=props['range'][0], 
+                _to=props['range'][1],
+                _steps=props['range'][2]
             )
 
         elif dtype == 'bool':
-            default_value = str(props['default'])
-            var = ctk.StringVar(value=default_value)
+            default_value = my_config_manager.get(key)
+            var = ctk.BooleanVar(value=default_value)
             widget = ctk.CTkOptionMenu(
                 master=self.scrollable_frame, 
-                variable=var, 
+                command=lambda val: var.set(val=='True'),
                 values=['True', 'False'],
                 font=self.my_font,
                 dropdown_font=self.my_font,
@@ -560,7 +549,7 @@ class SettingsFrame:
         return widget, var
 
     def _on_update_value(self, updated_key):
-        print(f'{updated_key} is UPDATED !!')
+        #print(f'{updated_key} is UPDATED !!')
         new_value = self._created_map[updated_key]['var'].get()
         original_value = self._created_map[updated_key]['original_value']
         if str(new_value) != str(original_value):
@@ -569,9 +558,27 @@ class SettingsFrame:
             )
         else:
             self._created_map[updated_key]['value_label'].configure(text='')
-            
+
     def _save(self):
-        pass
+        # get a map of key -> var.get()..[transformed to dtype]
+        updated_keys_map = {}
+        for key in my_config_manager.get_sorted_setting_keys():
+            if self._created_map[key]['var'].get() != self._created_map[key]['original_value']:
+                updated_keys_map[key] = self._created_map[key]['var'].get()
+        
+        print('[SAVE]: UPDATED_KEYS', json.dumps(updated_keys_map, indent=4))
+        if not len(updated_keys_map):
+            print('No updates !! No need to save')
+            return # No updates done
+        
+        # set_temp for keys whose original values are changed.. if none changed return here.
+        updated_config = my_config_manager.get_updated_config(updated_keys_map)
+        # config_manager.save() -> write to file and reload the config.json
+        my_config_manager.save_changes(updated_config)
+        # update the widgets and vars with new value.. only changed the original_value and reset the value_labels
+        for key in my_config_manager.get_sorted_setting_keys():
+            self._created_map[key]['original_value'] = my_config_manager.get(key)
+        self._reset()       
 
     def _get_labelframe (self, master_frame: ctk.CTkFrame, label_txt: str):
         return tkLabelFrame(
@@ -580,21 +587,35 @@ class SettingsFrame:
         )
 
 class SliderWithLabel(ctk.CTkFrame):
-    def __init__(self, master, font, from_=0, to=100, num_of_steps=None, var=None, **kwargs):
+    def __init__(self, master, font, var, dtype, _from, _to, _steps=1, **kwargs):
         super().__init__(master, **kwargs)
+        self.var = var
+        self.dp = 0 
+        if '.' in str(_steps):
+            self.dp = len(str(_steps).split('.')[1])
 
-        self.slider = ctk.CTkSlider(self, from_=from_, to=to, variable=var, command=self.update_label)
-        if num_of_steps:
-            self.slider.configure(number_of_steps=num_of_steps)
+        if dtype=='int':
+            _from, _to, _steps = int(_from), int(_to), int(_steps)
+            print('_steps', _steps)
+            num_of_steps = ((_to-_from)//_steps) + 1
+            
+        elif dtype=='float':
+            _from, _to, _steps = float(_from), float(_to), float(_steps)
+            num_of_steps = int((_to-_from)/_steps) + 1
+
+        self.slider = ctk.CTkSlider(self, from_=_from, to=_to, number_of_steps=num_of_steps, variable=var, command=self.update_label)
+
         self.value_label = ctk.CTkLabel(self, text=f"{var.get()}", font=font)
-
         self.value_label.grid(row=0, column=0, pady=(5, 0))  # Label above slider
         self.slider.grid(row=1, column=0, padx=10, pady=(0, 5), sticky="ew")
 
         self.columnconfigure(0, weight=1)  # Center align contents
 
     def update_label(self, value):
-        self.value_label.configure(text=f"{int(value)}")
+        rounded_val = round(value,self.dp)
+        print('update_label', rounded_val)
+        self.var.set(rounded_val)
+        self.value_label.configure(text=f"{self.var.get()}")
 
 
 class DataSetDivFrame:
