@@ -107,8 +107,7 @@ def ACTIVITY_BASED_DIV(dataset_file_path: str, num_of_compounds_in_each_cluster:
     )
     dataset_df = pd.read_excel(dataset_file_path)
     n_samples, n_features = dataset_df.shape
-
-    df_sorted = dataset_df.sort_values(by=dataset_df.columns[-1], ascending=True).reset_index()
+    df_sorted = dataset_df.sort_values(by=[dataset_df.columns[-1], dataset_df.columns[-0]], ascending=[True, True]).reset_index()
     num_of_test_set_compounds = n_samples // num_of_compounds_in_each_cluster
     test_indices = []
     
