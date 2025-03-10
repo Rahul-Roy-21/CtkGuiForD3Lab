@@ -1,5 +1,6 @@
 import os
 #import sys
+from threading import Thread, Event
 import customtkinter as ctk
 from PIL import Image, ImageTk
 from constants import my_config_manager, IMG_DIR
@@ -814,16 +815,19 @@ showAlgoLabelFrame_ForOption_InTaskPanel(ALGO_LB_FRAMES['model_build'], 'RF')
 settings_panel = taskPanelMap['settings']
 settingsFrame = None
 
+settings_created_event = Event()  # Event to track when SettingsFrame is ready
+
 def generate_settings_frame():
     global settingsFrame
-    loader = InProgressWindow(parent=root, font=MY_FONT_1, gif_path=RESULTS_LOADING_IMG_PATH)
-    loader.create()
-    loader.update_progress_verdict('Creating Settings Panel..')
-
+    inProgress = InProgressWindow(parent=root, font=MY_FONT_1, gif_path=RESULTS_LOADING_IMG_PATH)
+    inProgress.create()
+    inProgress.update_progress_verdict('Creating Settings Panel..')
+    
     def create_frame():
         global settingsFrame
         settingsFrame = SettingsFrame(
             masterFrame=settings_panel,
+            inProgress=inProgress,
             my_font=MY_FONT_1,
             colors={
                 'fg': COLORS['SKYBLUE_FG'], 
@@ -832,17 +836,42 @@ def generate_settings_frame():
                 'optionmenu': {'fg': COLORS['GREY_FG'], 'hover': COLORS['GREY_HOVER_FG']},
             }
         )
-        loader.destroy()  # Ensure loader is destroyed after frame creation
+        inProgress.destroy()  # Ensure inProgress is destroyed after frame creation
+        settings_created_event.set()  # Signal that SettingsFrame is ready
+
     # Ensure GUI update happens in the main thread
     root.after(0, create_frame)
 
 def create_settings_panel():
     global settingsFrame
     if settingsFrame:
+        settings_created_event.set()  # If already created, signal readiness
         return
-    print('creating settings')
-    Thread(target=generate_settings_frame).start()
+    
+    print("Creating settings panel...")
+    settings_created_event.clear()  # Reset event before creating
+    
+    # Run the settings frame creation in a separate thread
+    thread = Thread(target=generate_settings_frame)
+    thread.start()
+    return thread  # Return the thread so we can wait for it
 
-taskSelectBtns['settings'].bind("<Button-1>", lambda ev: create_settings_panel())
+def create_settings_widgets_then_load_panel(func):
+    """Ensure func() runs only after settings panel is fully created."""
+
+    def wrapper():
+        thread = create_settings_panel()
+        if thread:
+            print('Waiting for settings panel to be created...')
+            settings_created_event.wait()  # Wait until settingsFrame is ready
+            print('Settings panel created, running func...')
+        func()  # Now execute the provided function
+    
+    # Run wrapper in a separate thread to avoid blocking the main UI thread
+    Thread(target=wrapper).start()
+
+# Ensure clicking the button waits for settings to load before executing the next command
+cmd_to_load_settings_panel = taskSelectBtns['settings'].cget('command')
+taskSelectBtns['settings'].configure(command=lambda *args: create_settings_widgets_then_load_panel(cmd_to_load_settings_panel))
 
 root.mainloop()

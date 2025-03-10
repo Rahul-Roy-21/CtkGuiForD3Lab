@@ -384,9 +384,11 @@ class FeatureAndAlgorithmFrame:
         return self.algo_dropdown
 
 class SettingsFrame:
-    def __init__(self, masterFrame: ctk.CTkFrame, my_font: ctk.CTkFont, colors: dict):
+    def __init__(self, masterFrame: ctk.CTkFrame, inProgress:InProgressWindow, my_font: ctk.CTkFont, colors: dict):
         self.master = masterFrame
         self.master.grid_rowconfigure(0, weight=1)
+        self.inProgress = inProgress
+        self.inProgress.update_progress_verdict('Fetching configurable Settings..')
         self.my_font = my_font
         self.colors = colors
         self.settings_mainframe = self._get_labelframe(self.master, 'Settings')
@@ -404,6 +406,7 @@ class SettingsFrame:
 
         self._created_map = {}  # KEY -> (var, settings_cur_value_label, original_value)
         self._create_widgets() # Inside SCROLLABLE FRAME 
+        self.inProgress.update_progress_verdict('Finishing up..')
 
         # 2 buttons - Discard all changes and Save Updates
         self.reset_btn = ctk.CTkButton(
@@ -431,6 +434,7 @@ class SettingsFrame:
             command=self._save
         )  
         self.save_btn.grid(row=1, column=1, padx=15, pady=5, sticky=ctk.NSEW)
+        self.inProgress.update_progress_verdict('DONE !!')
 
     def _reset(self):
         for valueMap in self._created_map.values():
@@ -441,6 +445,8 @@ class SettingsFrame:
     def _create_widgets(self):
         #ctk.CTkLabel(self.scrollable_frame, text="scrollable").grid(row=0,column=0)
         sorted_configurable_setting_keys = my_config_manager.get_sorted_setting_keys()
+        #num_keys = len(sorted_configurable_setting_keys)
+        self.inProgress.update_progress_verdict(f'Fetching configurable Settings,\nthis might take a few seconds..')
         for rowIdx, key in enumerate(sorted_configurable_setting_keys):
             settings_label = ctk.CTkLabel(self.scrollable_frame, text=key+" :", font=self.my_font)
             settings_label.grid(row=rowIdx, column=0, padx=5, pady=5, sticky=ctk.E)
@@ -455,6 +461,7 @@ class SettingsFrame:
             self._created_map[key] = {
                 'var':var, 'value_label': settings_cur_value_label, 'original_value': var.get()
             }
+            # self.inProgress.update_progress_verdict(f'Fetching configurable Settings..\n{rowIdx+1}/{num_keys}')
 
     def _create_widget_from_props (self, key: str, props: dict):
         #print('KEY: ', key, ', WIDGET: ', props)
@@ -517,7 +524,6 @@ class SettingsFrame:
             default_value = my_config_manager.get(key)
             range_props = props['range']
             num_of_steps = int((range_props[1]-range_props[0]) / range_props[2]) + 1
-            print(num_of_steps)
             var = ctk.DoubleVar(value=default_value)
             widget = SliderWithLabel(
                 master=self.scrollable_frame, fg_color='transparent',
@@ -596,7 +602,6 @@ class SliderWithLabel(ctk.CTkFrame):
 
         if dtype=='int':
             _from, _to, _steps = int(_from), int(_to), int(_steps)
-            print('_steps', _steps)
             num_of_steps = ((_to-_from)//_steps) + 1
             
         elif dtype=='float':
