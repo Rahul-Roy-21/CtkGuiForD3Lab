@@ -330,7 +330,9 @@ def OPTUNA_GENERATE_PLOTS (study: optuna.study.Study, algo_name: str):
     fig1.update_layout(
         title_font=title_settings,
         font=font_settings,
-        **_plot1_cfgs['layout']
+        **_plot1_cfgs['layout'],
+        plot_bgcolor='whitesmoke',
+        paper_bgcolor='white'
     )
     fig1.update_traces(**_plot1_cfgs['traces'])
     _UPDATE_FONT_PROPERTIES(fig1, font_settings, title_settings)
@@ -343,7 +345,9 @@ def OPTUNA_GENERATE_PLOTS (study: optuna.study.Study, algo_name: str):
     fig2.update_layout(
         title_font=title_settings,
         font=font_settings,
-        **_plot2_cfgs['layout']
+        **_plot2_cfgs['layout'],
+        plot_bgcolor='whitesmoke',
+        paper_bgcolor='white'
     )
     fig2.update_traces(**_plot2_cfgs['traces'])
     _UPDATE_FONT_PROPERTIES(fig2, font_settings, title_settings)
@@ -356,7 +360,9 @@ def OPTUNA_GENERATE_PLOTS (study: optuna.study.Study, algo_name: str):
     fig3.update_layout(
         title_font=title_settings,
         font=font_settings,
-        **_plot3_cfgs['layout']
+        **_plot3_cfgs['layout'],
+        plot_bgcolor='whitesmoke',
+        paper_bgcolor='white'
     )
     fig3.update_traces(**_plot3_cfgs['traces'])
     _UPDATE_FONT_PROPERTIES(fig3, font_settings, title_settings)
@@ -374,6 +380,8 @@ def OPTUNA_GENERATE_PLOTS (study: optuna.study.Study, algo_name: str):
 
     fig4.update_layout(
         **_plot4_cfgs['layout'],
+        plot_bgcolor='whitesmoke',
+        paper_bgcolor='white',
         **xaxis_settings,
         **yaxis_settings
     )
@@ -393,6 +401,8 @@ def OPTUNA_GENERATE_PLOTS (study: optuna.study.Study, algo_name: str):
 
     fig5.update_layout(
         **_plot5_cfgs['layout'],
+        plot_bgcolor='whitesmoke',
+        paper_bgcolor='white',
         **xaxis_settings,
         **yaxis_settings
     )
@@ -415,48 +425,49 @@ def SHAP_GENERATE_PLOT (model, X_train: pd.DataFrame, y_train: pd.DataFrame, mod
     inProgressUpdateFunc('Generating\nShap Summary Plot......')
     #_class_index = SHAP_CONFIGS['CLASS_INDEX']
     _shap_cmap = SHAP_CONFIGS['COLOR_SCHEME']
+    shap_class = 0 if int(SHAP_CONFIGS['CLASS_INDEX'])==0 else 1
 
     if model_algorithm=='RF':
         explainer = shap.Explainer(model, X_train)
         shap_values = explainer.shap_values(X_train, check_additivity=False)
         plt.clf()
-        shap.summary_plot(shap_values[:, :, 1], X_train, cmap=_shap_cmap, show=False) # Class 1 Shap
+        shap.summary_plot(shap_values[:, :, shap_class], X_train, cmap=_shap_cmap, show=False)
 
     elif model_algorithm=='SVM':
         explainer = shap.PermutationExplainer(model.predict_proba, X_train)  # Using full training set
         shap_values = explainer(X_train)
         plt.clf()
-        shap.summary_plot(shap_values[:, :, 1], X_train, cmap=_shap_cmap, show=False)
+        shap.summary_plot(shap_values[:, :, shap_class], X_train, cmap=_shap_cmap, show=False)
 
     elif model_algorithm=='LR':
         explainer = shap.PermutationExplainer(model.predict_proba, X_train)  # Using full training set
         shap_values = explainer(X_train)
         plt.clf()
-        shap.summary_plot(shap_values[:, :, 1], X_train, cmap=_shap_cmap, show=False)
+        shap.summary_plot(shap_values[:, :, shap_class], X_train, cmap=_shap_cmap, show=False)
 
     elif model_algorithm=='LDA':
         explainer = shap.Explainer(model, X_train)
         shap_values = explainer(X_train)
         plt.clf()
-        shap.summary_plot(shap_values, X_train, cmap=_shap_cmap, show=False)
+        shap.summary_plot(shap_values[:,:,shap_class], X_train, cmap=_shap_cmap, show=False)
 
     elif model_algorithm=='KNN':
         explainer = shap.PermutationExplainer(model.predict_proba, X_train)
         shap_values = explainer(X_train)
         plt.clf()
-        shap.summary_plot(shap_values[:, :, 1], X_train, cmap=_shap_cmap, show=False)
+        shap.summary_plot(shap_values[:, :, shap_class], X_train, cmap=_shap_cmap, show=False)
 
     elif model_algorithm=='GB':
         explainer = shap.Explainer(model, X_train)
         shap_values = explainer(X_train, check_additivity=False)
         plt.clf()
-        shap.summary_plot(shap_values, X_train, cmap=_shap_cmap, show=False)
+        shap.summary_plot(shap_values[:,:,shap_class], X_train, cmap=_shap_cmap, show=False)
 
     elif model_algorithm=='MLP':
         explainer = shap.PermutationExplainer(model.predict_proba, X_train)
         shap_values = explainer(X_train)
         plt.clf()
-        shap.summary_plot(shap_values[:, :, 1], X_train, cmap=_shap_cmap, show=False)
+        shap.summary_plot(shap_values[:, :, shap_class], X_train, cmap=_shap_cmap, show=False)
     
     else:
         raise Exception(f'unknown Model algorithm - {model_algorithm} for Shap plots !!')

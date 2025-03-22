@@ -513,24 +513,26 @@ class SettingsFrame:
         elif dtype == 'int' and utype == 'var':
             default_value = my_config_manager.get(key)
             var = ctk.IntVar(value=default_value)
+            range_obj = props['range']
             widget = SliderWithLabel(
                 master=self.scrollable_frame, fg_color='transparent',
                 font=self.my_font, var=var, dtype="int",
-                _from=props['range'][0], 
-                _to=props['range'][1]
+                _from=range_obj[0], 
+                _to=range_obj[1],
+                _steps=1 if len(range_obj)==2 else range_obj[2]
             )
 
         elif dtype == 'float' and utype == 'var':
             default_value = my_config_manager.get(key)
-            range_props = props['range']
-            num_of_steps = int((range_props[1]-range_props[0]) / range_props[2]) + 1
+            range_obj = props['range']
+            #num_of_steps = int((range_props[1]-range_props[0]) / range_props[2]) + 1
             var = ctk.DoubleVar(value=default_value)
             widget = SliderWithLabel(
                 master=self.scrollable_frame, fg_color='transparent',
                 font=self.my_font, var=var, dtype="float",
-                _from=props['range'][0], 
-                _to=props['range'][1],
-                _steps=props['range'][2]
+                _from=range_obj[0], 
+                _to=range_obj[1],
+                _steps=range_obj[2]
             )
 
         elif dtype == 'bool':
@@ -602,13 +604,15 @@ class SliderWithLabel(ctk.CTkFrame):
 
         if dtype=='int':
             _from, _to, _steps = int(_from), int(_to), int(_steps)
-            num_of_steps = ((_to-_from)//_steps) + 1
+            num_of_steps=int((_to-_from)/_steps)
             
         elif dtype=='float':
             _from, _to, _steps = float(_from), float(_to), float(_steps)
             num_of_steps = int((_to-_from)/_steps) + 1
 
-        self.slider = ctk.CTkSlider(self, from_=_from, to=_to, number_of_steps=num_of_steps, variable=var, command=self.update_label)
+        self.slider = ctk.CTkSlider(self, from_=_from, to=_to, number_of_steps=num_of_steps, variable=var)
+        if dtype=='float':
+            self.slider.configure(command=self.update_label)
         self.var.trace_add("write", self.sync_var_to_slider_label)
 
         self.value_label = ctk.CTkLabel(self, text=f"{var.get()}", font=font)
@@ -618,7 +622,6 @@ class SliderWithLabel(ctk.CTkFrame):
 
     def update_label(self, value):
         rounded_val = round(value,self.dp)
-        print('update_label', rounded_val)
         self.var.set(rounded_val)
 
     def sync_var_to_slider_label(self, *args):

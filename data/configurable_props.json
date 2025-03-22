@@ -4,7 +4,7 @@
         "min_features_selected": 12
     },
     "optuna": {
-        "total_trials": 50
+        "total_trials": 100
     },
     "plot_properties": {
         "ROC_CURVE": {
@@ -20,9 +20,9 @@
             "FONT_STYLE": "Times New Roman"
         },
         "RC_PARAMS": {
-            "FONT_SIZE": 12,
+            "FONT_SIZE": 17,
             "FONT_WEIGHT": "bold",
-            "FONT_STYLE": "Courier New"
+            "FONT_STYLE": "Times New Roman"
         },
         "SHAP": {
             "ENABLED": true,
@@ -35,13 +35,11 @@
                     "title": "Optimization History",
                     "height": 600,
                     "width": 800,
-                    "plot_bgcolor": "whitesmoke",
-                    "paper_bgcolor": "white",
                     "xaxis": {
                         "tickangle": 45,
                         "showgrid": true,
                         "gridcolor": "white",
-                        "dtick": 50,
+                        "dtick": 5,
                         "zeroline": false,
                         "zerolinecolor": "white",
                         "zerolinewidth": 2
@@ -50,7 +48,7 @@
                         "tickangle": 45,
                         "showgrid": true,
                         "gridcolor": "white",
-                        "dtick": 50,
+                        "dtick": 5,
                         "zeroline": false,
                         "zerolinecolor": "white",
                         "zerolinewidth": 2
@@ -66,8 +64,6 @@
                     "title": "Hyperparameter Importances",
                     "height": 500,
                     "width": 800,
-                    "plot_bgcolor": "whitesmoke",
-                    "paper_bgcolor": "white",
                     "bargap": 0.2,
                     "xaxis": {
                         "title": "Importance",
@@ -94,16 +90,14 @@
                 "layout": {
                     "title": "Parallel Coordinate Plot",
                     "height": 600,
-                    "width": 800,
-                    "plot_bgcolor": "whitesmoke",
-                    "paper_bgcolor": "white"
+                    "width": 800
                 },
                 "traces": {
                     "line": {
-                        "colorscale": "turbo_r",
+                        "colorscale": "magma",
                         "showscale": true,
                         "colorbar": {
-                            "title": "ColorScale"
+                            "title": "Objective Scale"
                         }
                     }
                 }
@@ -112,15 +106,13 @@
                 "layout": {
                     "title": "Slice Plot",
                     "height": 600,
-                    "width": 1000,
-                    "plot_bgcolor": "whitesmoke",
-                    "paper_bgcolor": "white"
+                    "width": 1000
                 },
                 "traces": {
                     "marker": {
                         "size": 6,
                         "colorbar": {
-                            "title": "Color_Scale"
+                            "title": "Objective Scale"
                         },
                         "colorscale": "portland"
                     }
@@ -146,9 +138,7 @@
                 "layout": {
                     "title": "Contour Plot",
                     "height": 1000,
-                    "width": 1000,
-                    "plot_bgcolor": "whitesmoke",
-                    "paper_bgcolor": "white"
+                    "width": 1000
                 },
                 "xaxis": {
                     "showline": true,
@@ -181,7 +171,7 @@
                         "width": 1
                     },
                     "colorbar": {
-                        "title": "Color_Scale",
+                        "title": "Objective Scale",
                         "titleside": "right",
                         "tickfont": {
                             "size": 12,
