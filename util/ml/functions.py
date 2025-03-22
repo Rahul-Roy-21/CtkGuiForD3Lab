@@ -37,9 +37,11 @@ from util.gui.widgets import InProgressWindow
 def setup_Matplotlib_globalFontSettings(func):
     def wrapper(*args, **kwargs):
         matplotlib.use('Agg')
-        matplotlib.rcParams['font.family'] = my_config_manager.get('plot_properties.RC_PARAMS.FONT_STYLE')
-        matplotlib.rcParams['font.size'] = my_config_manager.get('plot_properties.RC_PARAMS.FONT_SIZE')
-        matplotlib.rcParams['font.weight'] = my_config_manager.get('plot_properties.RC_PARAMS.FONT_WEIGHT')
+        plt.rcParams['font.family'] = my_config_manager.get('plot_properties.RC_PARAMS.FONT_STYLE')
+        plt.rcParams['font.size'] = my_config_manager.get('plot_properties.RC_PARAMS.FONT_SIZE')
+        plt.rcParams['font.weight'] = my_config_manager.get('plot_properties.RC_PARAMS.FONT_WEIGHT')
+        plt.rcParams['axes.labelweight'] = my_config_manager.get('plot_properties.RC_PARAMS.FONT_WEIGHT')
+
         return func(*args, **kwargs)  # Call the original function
     return wrapper
 
@@ -427,53 +429,34 @@ def SHAP_GENERATE_PLOT (model, X_train: pd.DataFrame, y_train: pd.DataFrame, mod
         shap.summary_plot(shap_values[:, :, 1], X_train, cmap=_shap_cmap, show=False)
 
     elif model_algorithm=='LR':
-        # ?? = whether to filter class_1 compounds
-        class_1_indices = np.where(y_train == 1)[0]
-        X_train_class_1 = X_train.iloc[class_1_indices]  # Keep DataFrame structure
-
         explainer = shap.PermutationExplainer(model.predict_proba, X_train)  # Using full training set
-        shap_values = explainer(X_train_class_1)
+        shap_values = explainer(X_train)
         plt.clf()
-        shap.summary_plot(shap_values[:, :, 1], X_train_class_1, cmap=_shap_cmap, show=False)
+        shap.summary_plot(shap_values[:, :, 1], X_train, cmap=_shap_cmap, show=False)
 
     elif model_algorithm=='LDA':
         explainer = shap.Explainer(model, X_train)
         shap_values = explainer(X_train)
-        # Generate SHAP summary plot for class 1
-        # The shap_values object contains SHAP values for all classes
         plt.clf()
-        shap.summary_plot(shap_values, X_train, class_names=['Class 0', 'Class 1'], class_inds=[1],  cmap=_shap_cmap, show=False)
+        shap.summary_plot(shap_values, X_train, cmap=_shap_cmap, show=False)
 
     elif model_algorithm=='KNN':
-        class_1_indices = np.where(y_train == 1)[0]
-        X_train_class_1 = X_train.iloc[class_1_indices]
-
         explainer = shap.PermutationExplainer(model.predict_proba, X_train)
-        shap_values = explainer(X_train_class_1) # Compute SHAP values specifically for Class 1 compounds
+        shap_values = explainer(X_train)
         plt.clf()
-        shap.summary_plot(shap_values[:, :, 1], X_train_class_1, cmap=_shap_cmap, show=False)
+        shap.summary_plot(shap_values[:, :, 1], X_train, cmap=_shap_cmap, show=False)
 
     elif model_algorithm=='GB':
         explainer = shap.Explainer(model, X_train)
         shap_values = explainer(X_train, check_additivity=False)
-
-        # Filter SHAP values and features for class 1 compounds
-        class_1_indices = [i for i, label in enumerate(y_train) if label == 1]
-        shap_values_class_1 = shap_values[class_1_indices]
-        X_train_class_1 = X_train.iloc[class_1_indices]
-
-        # Generate SHAP summary plot for class 1 compounds
         plt.clf()
-        shap.summary_plot(shap_values_class_1, X_train_class_1, cmap=_shap_cmap, show=False)
+        shap.summary_plot(shap_values, X_train, cmap=_shap_cmap, show=False)
 
     elif model_algorithm=='MLP':
-        class_1_indices = np.where(y_train == 1)[0]
-        X_train_class_1 = X_train.iloc[class_1_indices]  # Keep DataFrame structure
-
         explainer = shap.PermutationExplainer(model.predict_proba, X_train)
-        shap_values = explainer(X_train_class_1)
+        shap_values = explainer(X_train)
         plt.clf()
-        shap.summary_plot(shap_values[:, :, 1], X_train_class_1, cmap=_shap_cmap, show=False)
+        shap.summary_plot(shap_values[:, :, 1], X_train, cmap=_shap_cmap, show=False)
     
     else:
         raise Exception(f'unknown Model algorithm - {model_algorithm} for Shap plots !!')
@@ -509,6 +492,7 @@ def SHAP_GENERATE_PLOT (model, X_train: pd.DataFrame, y_train: pd.DataFrame, mod
         os.path.join(OUT_DIR, f'{model_algorithm}_Shap_Summary.png')
     )
     plt.close(fig)
+    plt.close('all')
 
 @setup_Matplotlib_globalFontSettings
 def MODEL_BUILD_GENERATE_RESULTS (regressor, featureList: list, trainFilePath: str, testFilePath: str, regressorName: str, inProgressUpdateFunc: Callable[[str], None]) -> dict:
@@ -581,13 +565,16 @@ def MODEL_BUILD_GENERATE_RESULTS (regressor, featureList: list, trainFilePath: s
 
     inProgressUpdateFunc('Generating\nPlots..')
     PLOT_PROPS = my_config_manager.get('plot_properties')
+
     # GENERATE <>_RocCurve_Test.png
     roc_te = RocCurveDisplay.from_estimator(regressor, x_test, y_test)
+    auc_value = roc_auc_score(y_test, y_score2)
     plt.clf()
     fig,ax = plt.subplots(1, figsize=(10,10))
     roc_te.plot(
         color=PLOT_PROPS['ROC_CURVE']['COLOR'], 
-        lw=PLOT_PROPS['ROC_CURVE']['LW']
+        lw=PLOT_PROPS['ROC_CURVE']['LW'],
+        label=f'{regressorName}(AUC={auc_value:.3f})'
     )
     plt.plot(
         [0, 1], 
@@ -607,11 +594,13 @@ def MODEL_BUILD_GENERATE_RESULTS (regressor, featureList: list, trainFilePath: s
 
     # GENERATE <>_RocCurve_Train.png
     roc_tr = RocCurveDisplay.from_estimator(regressor, x_train, y_train)
+    auc_value = roc_auc_score(y_train, y_score1)
     plt.clf()
     fig,ax = plt.subplots(1, figsize=(10,10))
     roc_tr.plot(
         color=PLOT_PROPS['ROC_CURVE']['COLOR'], 
-        lw=PLOT_PROPS['ROC_CURVE']['LW']
+        lw=PLOT_PROPS['ROC_CURVE']['LW'],
+        label=f'{regressorName}(AUC={auc_value:.3f})'
     )
     plt.plot(
         [0, 1], 
