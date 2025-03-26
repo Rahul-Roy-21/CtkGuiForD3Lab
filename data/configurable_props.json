@@ -1,6 +1,6 @@
 {
     "feature_selection": {
-        "ranking_method": "MIS",
+        "ranking_method": "MDF",
         "min_features_selected": 12
     },
     "optuna": {
@@ -48,7 +48,7 @@
                         "tickangle": 45,
                         "showgrid": true,
                         "gridcolor": "white",
-                        "dtick": 5,
+                        "dtick": 0.1,
                         "zeroline": false,
                         "zerolinecolor": "white",
                         "zerolinewidth": 2

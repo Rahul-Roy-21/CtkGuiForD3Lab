@@ -706,7 +706,7 @@ class MultiSelectDialog(CTkToplevel):
                 command=lambda opt=option: self.check_num_of_options(opt)
             )
             ctkCheckBox.grid(row=idx, column=0, padx=10, pady=(10, 0), sticky=W)
-            if option in self.selectedOptions:
+            if str(option) in list(map(str, self.selectedOptions)):
                 ctkCheckBox.select()
             self.checkboxes[option]=ctkCheckBox
 
@@ -739,7 +739,7 @@ class MultiSelectDialog(CTkToplevel):
 
         # Update the StringVar with the selected options
         self.selectedOptions_StringVar.set(
-            ','.join(sorted(self.selectedOptions)).strip(',')
+            ','.join(sorted(map(str, self.selectedOptions))).strip(',')
         )
         self.destroy()
 

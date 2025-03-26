@@ -252,7 +252,7 @@ def GET_RANKED_FEATURES(train_file_path: str) -> list[dict]:
 
         # Convert Pd Dataframe -> Dict of Records
         ranked_features_dict = ranking.to_dict(orient='records')
-        print('ranked_features_dict: ', ranked_features_dict)
+        print('ranked_features_dict:\n', ranking.to_string(index=False, col_space=15))
 
         # Export in xls
         CHECK_DIR(OUT_DIR)
@@ -280,7 +280,7 @@ def GET_RANKED_FEATURES(train_file_path: str) -> list[dict]:
         mi_results = mi_results.sort_values(by="Rank")
         
         ranked_features_dict = mi_results.to_dict('records')
-        print('ranked_features_dict: ', ranked_features_dict)
+        print('ranked_features_dict:\n', mi_results.to_string(index=False, col_space=15))
 
         # Export in xls
         CHECK_DIR(OUT_DIR)
