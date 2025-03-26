@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import re as regEx
 from pathlib import Path
 import gc as hp_optim_gc
 from itertools import product
@@ -324,6 +325,11 @@ def OPTUNA_GENERATE_PLOTS (study: optuna.study.Study, algo_name: str):
     font_settings = dict(family=PLOT_PROPS['RC_PARAMS']['FONT_STYLE'], size=PLOT_PROPS['RC_PARAMS']['FONT_SIZE'])
     title_settings = dict(family=PLOT_PROPS['TITLE']['FONT_STYLE'], size=PLOT_PROPS['TITLE']['FONT_SIZE'])
 
+    all_params = study.best_trial.params.keys()
+    if algo_name=='MLP':
+        all_params = [p for p in all_params if not regEx.match(r"n_layer_\d+", p)]
+    print(f'PLOT PARAMS: {all_params}')
+
     # plot-1
     _plot1_cfgs = PLOT_PROPS['OPTUNA']['plot1']
     fig1 = vis.plot_optimization_history(study)
@@ -341,7 +347,7 @@ def OPTUNA_GENERATE_PLOTS (study: optuna.study.Study, algo_name: str):
 
     # plot-2
     _plot2_cfgs = PLOT_PROPS['OPTUNA']['plot2']
-    fig2 = vis.plot_param_importances(study)
+    fig2 = vis.plot_param_importances(study, params=all_params)
     fig2.update_layout(
         title_font=title_settings,
         font=font_settings,
@@ -356,7 +362,7 @@ def OPTUNA_GENERATE_PLOTS (study: optuna.study.Study, algo_name: str):
 
     # plot-3
     _plot3_cfgs = PLOT_PROPS['OPTUNA']['plot3']
-    fig3 = vis.plot_parallel_coordinate(study)
+    fig3 = vis.plot_parallel_coordinate(study, params=all_params)
     fig3.update_layout(
         title_font=title_settings,
         font=font_settings,
@@ -371,7 +377,7 @@ def OPTUNA_GENERATE_PLOTS (study: optuna.study.Study, algo_name: str):
 
     # plot-4
     _plot4_cfgs = PLOT_PROPS['OPTUNA']['plot4']
-    fig4 = vis.plot_slice(study)
+    fig4 = vis.plot_slice(study, params=all_params)
     num_subplots = len(fig4.data)
     xaxis_settings, yaxis_settings = {}, {}
     for i in range(num_subplots):
@@ -392,7 +398,7 @@ def OPTUNA_GENERATE_PLOTS (study: optuna.study.Study, algo_name: str):
 
     # plot-5
     _plot5_cfgs = PLOT_PROPS['OPTUNA']['plot5']
-    fig5 = vis.plot_contour(study)
+    fig5 = vis.plot_contour(study, params=all_params)
     num_subplots = len(fig5.data)
     xaxis_settings, yaxis_settings = {}, {}
     for i in range(num_subplots):
