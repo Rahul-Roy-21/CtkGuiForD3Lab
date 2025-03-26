@@ -129,10 +129,10 @@
                 "utype": "menu",
                 "options": [
                     "Times New Roman",
-                    "Cambria",
-                    "Helvatica",
+                    "Arial",
                     "Courier New",
-                    "Verdana"
+                    "Verdana",
+                    "serif"
                 ],
                 "default": 3
             }

@@ -429,43 +429,43 @@ def SHAP_GENERATE_PLOT (model, X_train: pd.DataFrame, y_train: pd.DataFrame, mod
 
     if model_algorithm=='RF':
         explainer = shap.Explainer(model, X_train)
-        shap_values = explainer.shap_values(X_train, check_additivity=False)
+        shap_values = explainer.shap_values(X_train)
         plt.clf()
         shap.summary_plot(shap_values[:, :, shap_class], X_train, cmap=_shap_cmap, show=False)
 
     elif model_algorithm=='SVM':
         explainer = shap.PermutationExplainer(model.predict_proba, X_train)  # Using full training set
-        shap_values = explainer(X_train)
+        shap_values = explainer.shap_values(X_train)
         plt.clf()
         shap.summary_plot(shap_values[:, :, shap_class], X_train, cmap=_shap_cmap, show=False)
 
     elif model_algorithm=='LR':
         explainer = shap.PermutationExplainer(model.predict_proba, X_train)  # Using full training set
-        shap_values = explainer(X_train)
+        shap_values = explainer.shap_values(X_train)
         plt.clf()
         shap.summary_plot(shap_values[:, :, shap_class], X_train, cmap=_shap_cmap, show=False)
 
     elif model_algorithm=='LDA':
-        explainer = shap.Explainer(model, X_train)
-        shap_values = explainer(X_train)
+        explainer = shap.PermutationExplainer(model.predict_proba, X_train)
+        shap_values = explainer.shap_values(X_train)
         plt.clf()
         shap.summary_plot(shap_values[:,:,shap_class], X_train, cmap=_shap_cmap, show=False)
 
     elif model_algorithm=='KNN':
         explainer = shap.PermutationExplainer(model.predict_proba, X_train)
-        shap_values = explainer(X_train)
+        shap_values = explainer.shap_values(X_train)
         plt.clf()
         shap.summary_plot(shap_values[:, :, shap_class], X_train, cmap=_shap_cmap, show=False)
 
     elif model_algorithm=='GB':
-        explainer = shap.Explainer(model, X_train)
-        shap_values = explainer(X_train, check_additivity=False)
+        explainer = shap.PermutationExplainer(model.predict_proba, X_train)
+        shap_values = explainer.shap_values(X_train)
         plt.clf()
         shap.summary_plot(shap_values[:,:,shap_class], X_train, cmap=_shap_cmap, show=False)
 
     elif model_algorithm=='MLP':
         explainer = shap.PermutationExplainer(model.predict_proba, X_train)
-        shap_values = explainer(X_train)
+        shap_values = explainer.shap_values(X_train)
         plt.clf()
         shap.summary_plot(shap_values[:, :, shap_class], X_train, cmap=_shap_cmap, show=False)
     

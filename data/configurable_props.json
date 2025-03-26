@@ -15,19 +15,19 @@
             "COLOR": "blue"
         },
         "TITLE": {
-            "FONT_SIZE": 21,
+            "FONT_SIZE": 16,
             "FONT_WEIGHT": "bold",
             "FONT_STYLE": "Times New Roman"
         },
         "RC_PARAMS": {
-            "FONT_SIZE": 17,
+            "FONT_SIZE": 15,
             "FONT_WEIGHT": "bold",
             "FONT_STYLE": "Times New Roman"
         },
         "SHAP": {
             "ENABLED": true,
             "CLASS_INDEX": 1,
-            "COLOR_SCHEME": "turbo_r"
+            "COLOR_SCHEME": "cividis"
         },
         "OPTUNA": {
             "plot1": {
