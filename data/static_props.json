@@ -593,9 +593,9 @@
                     "default_to": 1e-1
                 },
                 "max_depth": {
-                    "min_val": 2,
-                    "max_val": 32,
-                    "default_from": 2,
+                    "min_val": 1,
+                    "max_val": 30,
+                    "default_from": 1,
                     "default_to": 10
                 },
                 "min_samples_split": {

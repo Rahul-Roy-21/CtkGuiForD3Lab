@@ -434,7 +434,7 @@ def SHAP_GENERATE_PLOT (model, X_train: pd.DataFrame, y_train: pd.DataFrame, mod
     shap_class = 0 if int(SHAP_CONFIGS['CLASS_INDEX'])==0 else 1
 
     if model_algorithm=='RF':
-        explainer = shap.Explainer(model, X_train)
+        explainer = shap.Explainer(model, X_train, check_additivity=False)
         shap_values = explainer.shap_values(X_train)
         plt.clf()
         shap.summary_plot(shap_values[:, :, shap_class], X_train, cmap=_shap_cmap, show=False)
