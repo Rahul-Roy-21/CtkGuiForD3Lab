@@ -587,10 +587,16 @@
                     "min_num_of_choices": 2
                 },
                 "learning_rate": {
-                    "min_val": 1e-3,
-                    "max_val": 1,
-                    "default_from": 1e-2,
-                    "default_to": 1e-1
+                    "options": [
+                        1e-3,
+                        1e-2,
+                        1e-1,
+                        1,
+                        10,
+                        100,
+                        1000
+                    ],
+                    "min_num_of_choices": 2
                 },
                 "max_depth": {
                     "min_val": 1,

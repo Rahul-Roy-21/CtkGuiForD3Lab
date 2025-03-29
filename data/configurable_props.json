@@ -48,7 +48,7 @@
                         "tickangle": 45,
                         "showgrid": true,
                         "gridcolor": "white",
-                        "dtick": 0.005,
+                        "dtick": 0.05,
                         "zeroline": false,
                         "zerolinecolor": "white",
                         "zerolinewidth": 2

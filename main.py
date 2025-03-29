@@ -474,11 +474,9 @@ GB_HP_OPTIM_DATA_AND_VARS = {
             'grid': {'row':0,'col':0,'colspan':1}
         },
         'learning_rate': {
-            'type': MyLogarithmicRangeEntryField(
-                from_var=ctk.DoubleVar(value=GB_HP_OPTIM_DATA['learning_rate']['default_from']),
-                to_var=ctk.DoubleVar(value=GB_HP_OPTIM_DATA['learning_rate']['default_to']),
-                min_val=GB_HP_OPTIM_DATA['learning_rate']['min_val'],
-                max_val=GB_HP_OPTIM_DATA['learning_rate']['max_val'],
+            'type': MultiSelectEntryField(
+                options=GB_HP_OPTIM_DATA['learning_rate']['options'],
+                selected_opt_var=ctk.StringVar(value=','.join(list(map(str, GB_HP_OPTIM_DATA['learning_rate']['options']))))
             ),
             'grid': {'row':1,'col':0,'colspan':1}
         },

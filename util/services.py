@@ -255,7 +255,7 @@ def GB_HP_OPTIM_SUBMIT (master:CTk, loading_gif_path:str, GB_inputs: dict, GB_re
         'SCORING': GB_inputs['SCORING'].get(),
         'CROSS_FOLD_VALID': GB_inputs['CROSS_FOLD_VALID'].get(),
         'n_estimators': {k:v.get() for k,v in GB_inputs['n_estimators'].items()},
-        'learning_rate': {k:v.get() for k,v in GB_inputs['learning_rate'].items()},
+        'learning_rate': list(map(float, GB_inputs['learning_rate'].get().split(','))),
         'criterion': GB_inputs['criterion'].get().split(','),
         'max_depth': {k:v.get() for k,v in GB_inputs['max_depth'].items()},
         'min_samples_split': {k:v.get() for k,v in GB_inputs['min_samples_split'].items()},

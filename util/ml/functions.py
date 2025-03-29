@@ -1313,9 +1313,8 @@ def GB_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
                 'n_estimators', 
                 _PARAM_GRID['n_estimators']['_FROM'], _PARAM_GRID['n_estimators']['_TO'], step=_PARAM_GRID['n_estimators']['_STEP']
             )
-            learning_rate = trial.suggest_float(
-                'learning_rate', 
-                _PARAM_GRID['learning_rate']['_FROM'], _PARAM_GRID['learning_rate']['_TO'],
+            learning_rate = trial.suggest_categorical(
+                "learning_rate", _PARAM_GRID['learning_rate']
             )
             criterion = trial.suggest_categorical(
                 'criterion', _PARAM_GRID['criterion']
