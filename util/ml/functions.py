@@ -325,10 +325,10 @@ def OPTUNA_GENERATE_PLOTS (study: optuna.study.Study, algo_name: str):
     font_settings = dict(family=PLOT_PROPS['RC_PARAMS']['FONT_STYLE'], size=PLOT_PROPS['RC_PARAMS']['FONT_SIZE'])
     title_settings = dict(family=PLOT_PROPS['TITLE']['FONT_STYLE'], size=PLOT_PROPS['TITLE']['FONT_SIZE'])
 
-    all_params = study.best_trial.params.keys()
+    all_params = list(study.best_trial.params.keys())
     if algo_name=='MLP':
         all_params = [p for p in all_params if not regEx.match(r"n_layer_\d+", p)]
-    print(f'PLOT PARAMS: {all_params}')
+    print(f'PARAMS used for OPTUNA PLOTs: {all_params}')
 
     # plot-1
     _plot1_cfgs = PLOT_PROPS['OPTUNA']['plot1']
@@ -640,6 +640,15 @@ def MODEL_BUILD_GENERATE_RESULTS (regressor, featureList: list, trainFilePath: s
     inProgressUpdateFunc('Done !!')
     return results
 
+def _TRY_CREATE_OPTUNA_STUDY_SQLITE(algo_name:str) -> optuna.study.Study:
+    try:
+        CHECK_DIR(OUT_DIR)
+        my_study = optuna.create_study(direction='maximize', study_name=algo_name, storage=f'sqlite:///{OUT_DIR}/{algo_name}_optuna_study.db')
+    except Exception as e:
+        print(f'Cannot save optuna study for Exception {str(e)}')
+        my_study = optuna.create_study(direction='maximize', study_name='Random_Forest')
+    return my_study
+
 PARAM_GRID_KEYS_NOT_FOR_HP_OPTIM = {'FEATURES','METHOD','SCORING','CROSS_FOLD_VALID'}
 
 def _MAP_PARAMRANGE_TO_ACTUAL_LISTOFVALUES (rangeMap: dict):
@@ -763,7 +772,7 @@ def RF_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
             ).mean()
         
         IN_PROGRESS._CREATE_OPTUNA_PROGRESS()
-        rf_study = optuna.create_study(direction='maximize', study_name='Random_Forest')
+        rf_study = _TRY_CREATE_OPTUNA_STUDY_SQLITE('RF')
         print(my_config_manager.get('optuna.total_trials'))
         rf_study.optimize(
             func=RF_OBJECTIVE, n_trials=my_config_manager.get('optuna.total_trials'), callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
@@ -871,7 +880,7 @@ def SVM_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
             ).mean()
         
         IN_PROGRESS._CREATE_OPTUNA_PROGRESS()
-        svm_study = optuna.create_study(direction='maximize', study_name='SupportVectorMachine')
+        svm_study = _TRY_CREATE_OPTUNA_STUDY_SQLITE('SVM')
         svm_study.optimize(
             func=SVM_OBJECTIVE, n_trials=my_config_manager.get('optuna.total_trials'), callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
         )
@@ -975,7 +984,7 @@ def LDA_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
             ).mean()
         
         IN_PROGRESS._CREATE_OPTUNA_PROGRESS()
-        lda_study = optuna.create_study(direction='maximize', study_name='LinearDiscriminantAnalysis')
+        lda_study = _TRY_CREATE_OPTUNA_STUDY_SQLITE('LDA')
         lda_study.optimize(
             func=LDA_OBJECTIVE, n_trials=my_config_manager.get('optuna.total_trials')*10, callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
         )
@@ -1100,7 +1109,7 @@ def LR_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
             ).mean()
         
         IN_PROGRESS._CREATE_OPTUNA_PROGRESS()
-        lr_study = optuna.create_study(direction='maximize', study_name='LogisticRegression')
+        lr_study = _TRY_CREATE_OPTUNA_STUDY_SQLITE('LR')
         lr_study.optimize(
             func=LR_OBJECTIVE, n_trials=my_config_manager.get('optuna.total_trials')*10, callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
         )
@@ -1210,7 +1219,7 @@ def KNN_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
             ).mean()
         
         IN_PROGRESS._CREATE_OPTUNA_PROGRESS()
-        knn_study = optuna.create_study(direction='maximize', study_name='KNearestNeighbors')
+        knn_study = _TRY_CREATE_OPTUNA_STUDY_SQLITE('KNN')
         knn_study.optimize(
             func=KNN_OBJECTIVE, n_trials=my_config_manager.get('optuna.total_trials')*10, callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
         )
@@ -1339,7 +1348,7 @@ def GB_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
             ).mean()
         
         IN_PROGRESS._CREATE_OPTUNA_PROGRESS()
-        gb_study = optuna.create_study(direction='maximize', study_name='GradientBoosting')
+        gb_study = _TRY_CREATE_OPTUNA_STUDY_SQLITE('GB')
         gb_study.optimize(
             func=GB_OBJECTIVE, n_trials=my_config_manager.get('optuna.total_trials'), callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
         )
@@ -1495,7 +1504,7 @@ def MLP_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
             ).mean()
         
         IN_PROGRESS._CREATE_OPTUNA_PROGRESS()
-        mlp_study = optuna.create_study(direction='maximize', study_name='MLP')
+        mlp_study = _TRY_CREATE_OPTUNA_STUDY_SQLITE('MLP')
         mlp_study.optimize(
             func=MLP_OBJECTIVE, n_trials=my_config_manager.get('optuna.total_trials'), callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
         )
