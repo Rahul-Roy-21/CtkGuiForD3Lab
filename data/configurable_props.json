@@ -92,7 +92,7 @@
                 },
                 "traces": {
                     "line": {
-                        "colorscale": "magma",
+                        "colorscale": "rainbow",
                         "showscale": true,
                         "colorbar": {
                             "title": "Objective Scale"
