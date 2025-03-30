@@ -27,7 +27,7 @@
         "SHAP": {
             "ENABLED": true,
             "CLASS_INDEX": 1,
-            "COLOR_SCHEME": "cividis"
+            "COLOR_SCHEME": "seismic"
         },
         "OPTUNA": {
             "plot1": {
