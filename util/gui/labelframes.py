@@ -8,7 +8,7 @@ COLORS = my_config_manager.get('colors')
 # For RF: algoValueInMap = algoMap['RF']
 # _DATA[or fields_data]: field configurations
 class HyperParamOptim_AlgoLabelFrame:
-    def __init__(self, master_panel: ctk.CTkFrame, algoValueInMap: dict, algo_hp_optim_fields_data: dict, my_font: ctk.CTkFont, fg_color: str, result_Loading_ImgPath: str, SELECTED_FEATURES:ctk.StringVar, trainVar:ctk.StringVar, testVar:ctk.StringVar, hyperParamsFrame_NumOfCells: int):
+    def __init__(self, master_panel: ctk.CTkFrame, algoMap:dict, algo_name:str, algo_hp_optim_fields_data: dict, my_font: ctk.CTkFont, fg_color: str, result_Loading_ImgPath: str, SELECTED_FEATURES:ctk.StringVar, trainVar:ctk.StringVar, testVar:ctk.StringVar, hyperParamsFrame_NumOfCells: int):
         self.master = master_panel
         self.result_Loading_ImgPath = result_Loading_ImgPath
         self.my_font = my_font
@@ -16,6 +16,9 @@ class HyperParamOptim_AlgoLabelFrame:
         self._DATA = algo_hp_optim_fields_data
         self.TRAIN_VAR, self.TEST_VAR = trainVar, testVar
         self.hyperParamsFrame_NumOfCells = hyperParamsFrame_NumOfCells
+        self.algoMap = algoMap
+        self.algo_name = algo_name
+        algoValueInMap = self.algoMap[algo_name]
         self.algo_hp_optim_func_onSubmit = algoValueInMap['algo_hp_optim_func'] # Call this func in the submit along with lambda and arguments
     
         self.algo_labelFrame = self._get_labelframe(master_panel, algoValueInMap['algo_name'])
@@ -111,14 +114,39 @@ class HyperParamOptim_AlgoLabelFrame:
 
             _field_entry.grid(row=0, column=0, padx=10, pady=5, sticky=ctk.EW)
 
+        btns_frame = CTkFrame(self.algo_hp_optim, fg_color='transparent')
+        btns_frame.grid(row=self.maxRow+1, column=0, columnspan=self.hyperParamsFrame_NumOfCells, padx=10, pady=10, sticky=NSEW)
+        btns_frame.grid_columnconfigure((0,1), weight=1)
+
         # Create Submit Button
         submit_btn = CREATE_SUBMIT_BUTTON(
-            master_frame=self.algo_hp_optim, 
+            master_frame=btns_frame, 
             my_font=self.my_font, 
             commandOnSubmit= lambda: self.algo_hp_optim_func_onSubmit(self.master, self.result_Loading_ImgPath, self.algo_inputs, self.algo_results_var, self.my_font, self.TRAIN_VAR, self.TEST_VAR)
         )
-        submit_btn.grid(row=self.maxRow+1, column=0, columnspan=self.hyperParamsFrame_NumOfCells, padx=10, pady=10)
+        submit_btn.grid(row=0, column=0, padx=5, pady=10, sticky=E)
 
+        # Re-Generate Plots
+        regenplots_btn = CTkButton(
+            master=btns_frame,
+            text='Re-Generate Plots',
+            font=self.my_font,
+            fg_color=COLORS['LIGHTRED_FG'],
+            hover_color=COLORS['LIGHTRED_HOVER_FG'],
+            text_color='white',
+            corner_radius=0,
+            width=200,
+            border_spacing=0,
+            command=self.open_regen_plots_window
+        )
+        regenplots_btn.grid(row=0, column=1, padx=5, pady=10, sticky=W)     
+
+    def open_regen_plots_window(self):
+        try:
+            RegenerateOptunaPlots(self.master, self.algo_name, self.algoMap, self.my_font)
+        except Exception as e:
+            #e.with_traceback()
+            CustomWarningBox(self.master, [str(e)], self.my_font)
 
     def _build_method_scoring_cvfolds_row(self):
         self.algo_method.grid_columnconfigure(0, weight=1)
@@ -336,7 +364,7 @@ def CREATE_SUBMIT_BUTTON(master_frame:ctk.CTkFrame, my_font:str, commandOnSubmit
         hover_color=COLORS['MEDIUMGREEN_HOVER_FG'],
         text_color='white',
         corner_radius=0,
-        width=300,
+        width=200,
         border_spacing=0,
         command=commandOnSubmit
     )

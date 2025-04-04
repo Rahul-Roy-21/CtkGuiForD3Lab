@@ -60,6 +60,30 @@ def RF_HP_OPTIM_SUBMIT (master:CTk, loading_gif_path:str, RF_inputs: dict, RF_re
     
     Thread(target=RUN_OPTIMIZATION).start()
 
+def REPLOT_OPTUNA_SUBMIT (master:CTk, loading_gif_path:str, font: CTkFont, algo_name:str, study_name:str):
+    inProgress = InProgressWindow(master, font, loading_gif_path)
+    inProgress.create()
+    inProgress.update_progress_verdict('RE-Generating Plots')
+
+    def update_success():
+        inProgress.destroy()
+        CustomSuccessBox(master, "All Plots Are Regenerated Successfully !!", font)
+        
+    def update_failure (warnings: list):
+        inProgress.destroy()
+        CustomWarningBox(master, warnings, font)
+    
+    # GUI remains responsive on main thread, the optimization runs on seperate thread
+    def REPLOT():
+        try:
+            from util.ml.functions import RE_PLOT_OPTUNA_GRAPHS
+            RE_PLOT_OPTUNA_GRAPHS(algo_name, study_name, inProgress)
+            master.after(1000, update_success)
+        except Exception as ex:
+            master.after(1000, lambda warnings=[str(ex)]: update_failure(warnings))
+    
+    Thread(target=REPLOT).start()
+
 def SVM_HP_OPTIM_SUBMIT (master:CTk, loading_gif_path:str, SVM_inputs: dict, SVM_resultsVar: StringVar, font: CTkFont, trainEntryVar: StringVar, testEntryVar: StringVar):
     inProgress = InProgressWindow(master, font, loading_gif_path)
     inProgress.create()

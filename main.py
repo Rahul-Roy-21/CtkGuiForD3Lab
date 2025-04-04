@@ -131,8 +131,8 @@ side_panel = SidePanel(
         'btns': {
             'hp_optim': {'fg': COLORS['LIGHTRED_FG'], 'hover': COLORS['LIGHTRED_HOVER_FG']}, 
             'model_build': { 'fg': COLORS['MEDIUMGREEN_FG'], 'hover': COLORS['MEDIUMGREEN_HOVER_FG']},
-            'dataset_div': { 'fg': '#c96202', 'hover': '#e67002'},
-            'settings': { 'fg': '#728FCE', 'hover': '#86A3E2'}
+            'dataset_div': { 'fg': COLORS['ORANGE_FG'], 'hover': COLORS['ORANGE_HOVER_FG']},
+            'settings': { 'fg': COLORS['SLATEBLUE_FG'], 'hover': COLORS['SLATEBLUE_HOVER_FG']}
         }
     },
     img_pathsAndSizes={
@@ -254,7 +254,8 @@ RF_HP_OPTIM_DATA_AND_VARS = {
 }
 RF_hp_optim_panel = HyperParamOptim_AlgoLabelFrame(
     master_panel=hyperparam_optim_panel,
-    algoValueInMap=ALGO_MAP['RF'],
+    algoMap=ALGO_MAP,
+    algo_name='RF',
     algo_hp_optim_fields_data=RF_HP_OPTIM_DATA_AND_VARS,
     my_font=MY_FONT_1,
     fg_color=COLORS['SKYBLUE_FG'],
@@ -303,7 +304,8 @@ SVM_HP_OPTIM_DATA_AND_VARS = {
 }
 SVM_hp_optim_panel = HyperParamOptim_AlgoLabelFrame(
     master_panel=hyperparam_optim_panel,
-    algoValueInMap=ALGO_MAP['SVM'],
+    algoMap=ALGO_MAP,
+    algo_name='SVM',
     algo_hp_optim_fields_data=SVM_HP_OPTIM_DATA_AND_VARS,
     my_font=MY_FONT_1,
     fg_color=COLORS['SKYBLUE_FG'],
@@ -337,7 +339,8 @@ LDA_HP_OPTIM_DATA_AND_VARS = {
 }
 LDA_hp_optim_panel = HyperParamOptim_AlgoLabelFrame(
     master_panel=hyperparam_optim_panel,
-    algoValueInMap=ALGO_MAP['LDA'],
+    algoMap=ALGO_MAP,
+    algo_name='LDA',
     algo_hp_optim_fields_data=LDA_HP_OPTIM_DATA_AND_VARS,
     my_font=MY_FONT_1,
     fg_color=COLORS['SKYBLUE_FG'],
@@ -385,7 +388,8 @@ LR_HP_OPTIM_DATA_AND_VARS = {
 }
 LR_hp_optim_panel = HyperParamOptim_AlgoLabelFrame(
     master_panel=hyperparam_optim_panel,
-    algoValueInMap=ALGO_MAP['LR'],
+    algoMap=ALGO_MAP,
+    algo_name='LR',
     algo_hp_optim_fields_data=LR_HP_OPTIM_DATA_AND_VARS,
     my_font=MY_FONT_1,
     fg_color=COLORS['SKYBLUE_FG'],
@@ -439,7 +443,8 @@ KNN_HP_OPTIM_DATA_AND_VARS = {
 }
 KNN_hp_optim_panel = HyperParamOptim_AlgoLabelFrame(
     master_panel=hyperparam_optim_panel,
-    algoValueInMap=ALGO_MAP['KNN'],
+    algoMap=ALGO_MAP,
+    algo_name='KNN',
     algo_hp_optim_fields_data=KNN_HP_OPTIM_DATA_AND_VARS,
     my_font=MY_FONT_1,
     fg_color=COLORS['SKYBLUE_FG'],
@@ -518,7 +523,8 @@ GB_HP_OPTIM_DATA_AND_VARS = {
 }
 GB_hp_optim_panel = HyperParamOptim_AlgoLabelFrame(
     master_panel=hyperparam_optim_panel,
-    algoValueInMap=ALGO_MAP['GB'],
+    algoMap=ALGO_MAP,
+    algo_name='GB',
     algo_hp_optim_fields_data=GB_HP_OPTIM_DATA_AND_VARS,
     my_font=MY_FONT_1,
     fg_color=COLORS['SKYBLUE_FG'],
@@ -526,7 +532,7 @@ GB_hp_optim_panel = HyperParamOptim_AlgoLabelFrame(
     SELECTED_FEATURES=SELECTED_FEATURES,
     trainVar=TRAIN_FILE_PATH,
     testVar=TEST_FILE_PATH,
-    hyperParamsFrame_NumOfCells=1
+    hyperParamsFrame_NumOfCells=2
 )._GET_ALGO_LABELFRAME()
 
 MLP_HP_OPTIM_DATA = my_config_manager.get('algorithm_properties.MLP.hp_optim')
@@ -592,7 +598,8 @@ MLP_HP_OPTIM_DATA_AND_VARS = {
 }
 MLP_hp_optim_panel = HyperParamOptim_AlgoLabelFrame(
     master_panel=hyperparam_optim_panel,
-    algoValueInMap=ALGO_MAP['MLP'],
+    algoMap=ALGO_MAP,
+    algo_name='MLP',
     algo_hp_optim_fields_data=MLP_HP_OPTIM_DATA_AND_VARS,
     my_font=MY_FONT_1,
     fg_color=COLORS['SKYBLUE_FG'],

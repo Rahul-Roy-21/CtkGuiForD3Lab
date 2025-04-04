@@ -18,6 +18,10 @@
         "SKYBLUE_FG": "#E3E4FA",
         "GREY_HOVER_FG": "#a3a2a3",
         "GREY_FG": "#6b6a6b",
+        "ORANGE_FG": "#c96202",
+        "ORANGE_HOVER_FG": "#e67002",
+        "SLATEBLUE_FG": "#728FCE",
+        "SLATEBLUE_HOVER_FG": "#86A3E2",
         "LIGHT_YELLOW_FG": "#fff1cc"
     },
     "algorithm_properties": {

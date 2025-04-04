@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+from datetime import datetime
 import re as regEx
 from pathlib import Path
 import gc as hp_optim_gc
@@ -34,6 +35,8 @@ from constants import my_config_manager, OUT_DIR
 from json import dumps as jsonDumps
 from util.gui.widgets import InProgressWindow
 
+OPTUNA_STUDIES_DIR='optuna_studies'
+
 # Set global font properties
 def setup_Matplotlib_globalFontSettings(func):
     def wrapper(*args, **kwargs):
@@ -47,8 +50,7 @@ def setup_Matplotlib_globalFontSettings(func):
     return wrapper
 
 def CHECK_DIR(output_dir):
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
+    os.makedirs(output_dir, exist_ok=True)
 
 # DATASET DIVISION
 def KENNARD_STONE(dataset_file_path: str, train_samples_percent: int, inProgress: InProgressWindow) -> tuple:
@@ -320,7 +322,7 @@ def _UPDATE_FONT_PROPERTIES(fig: plotly_figure, font_settings: dict, title_setti
     )
 
 @setup_Matplotlib_globalFontSettings
-def OPTUNA_GENERATE_PLOTS (study: optuna.study.Study, algo_name: str):
+def OPTUNA_GENERATE_PLOTS (study: optuna.study.Study, algo_name: str, study_db_path: str, inProgress:InProgressWindow):
     PLOT_PROPS = my_config_manager.get('plot_properties')
     font_settings = dict(family=PLOT_PROPS['RC_PARAMS']['FONT_STYLE'], size=PLOT_PROPS['RC_PARAMS']['FONT_SIZE'])
     title_settings = dict(family=PLOT_PROPS['TITLE']['FONT_STYLE'], size=PLOT_PROPS['TITLE']['FONT_SIZE'])
@@ -331,6 +333,7 @@ def OPTUNA_GENERATE_PLOTS (study: optuna.study.Study, algo_name: str):
     print(f'PARAMS used for OPTUNA PLOTs: {all_params}')
 
     # plot-1
+    inProgress.update_progress_verdict('Generating Plots (0/5)')
     _plot1_cfgs = PLOT_PROPS['OPTUNA']['plot1']
     fig1 = vis.plot_optimization_history(study)
     fig1.update_layout(
@@ -342,10 +345,11 @@ def OPTUNA_GENERATE_PLOTS (study: optuna.study.Study, algo_name: str):
     )
     fig1.update_traces(**_plot1_cfgs['traces'])
     _UPDATE_FONT_PROPERTIES(fig1, font_settings, title_settings)
-    CHECK_DIR(OUT_DIR)
-    pio.write_image(fig1, f'output/{algo_name}_optimization_history.png', format='png', scale=2)
+    CHECK_DIR(study_db_path)
+    pio.write_image(fig1, os.path.join(study_db_path, f'{algo_name}_optimization_history.png'), format='png', scale=2)
 
     # plot-2
+    inProgress.update_progress_verdict('Generating Plots (1/5)')
     _plot2_cfgs = PLOT_PROPS['OPTUNA']['plot2']
     fig2 = vis.plot_param_importances(study, params=all_params)
     fig2.update_layout(
@@ -357,10 +361,11 @@ def OPTUNA_GENERATE_PLOTS (study: optuna.study.Study, algo_name: str):
     )
     fig2.update_traces(**_plot2_cfgs['traces'])
     _UPDATE_FONT_PROPERTIES(fig2, font_settings, title_settings)
-    CHECK_DIR(OUT_DIR)
-    pio.write_image(fig2, f'output/{algo_name}_param_importance.png', format='png', scale=2)
+    CHECK_DIR(study_db_path)
+    pio.write_image(fig2, os.path.join(study_db_path, f'{algo_name}_param_importance.png'), format='png', scale=2)
 
     # plot-3
+    inProgress.update_progress_verdict('Generating Plots (2/5)')
     _plot3_cfgs = PLOT_PROPS['OPTUNA']['plot3']
     fig3 = vis.plot_parallel_coordinate(study, params=all_params)
     fig3.update_layout(
@@ -372,10 +377,11 @@ def OPTUNA_GENERATE_PLOTS (study: optuna.study.Study, algo_name: str):
     )
     fig3.update_traces(**_plot3_cfgs['traces'])
     _UPDATE_FONT_PROPERTIES(fig3, font_settings, title_settings)
-    CHECK_DIR(OUT_DIR)
-    pio.write_image(fig3, f'output/{algo_name}_parallel_coordinate.png', format='png', scale=2)
+    CHECK_DIR(study_db_path)
+    pio.write_image(fig3, os.path.join(study_db_path, f'{algo_name}_parallel_coordinate.png'), format='png', scale=2)
 
     # plot-4
+    inProgress.update_progress_verdict('Generating Plots (3/5)')
     _plot4_cfgs = PLOT_PROPS['OPTUNA']['plot4']
     fig4 = vis.plot_slice(study, params=all_params)
     num_subplots = len(fig4.data)
@@ -393,10 +399,11 @@ def OPTUNA_GENERATE_PLOTS (study: optuna.study.Study, algo_name: str):
     )
     fig4.update_traces(**_plot4_cfgs['traces'])
     _UPDATE_FONT_PROPERTIES(fig4, font_settings, title_settings)
-    CHECK_DIR(OUT_DIR)
-    pio.write_image(fig4, f'output/{algo_name}_slice.png', format='png', scale=2)
+    CHECK_DIR(study_db_path)
+    pio.write_image(fig4, os.path.join(study_db_path, f'{algo_name}_slice.png'), format='png', scale=2)
 
     # plot-5
+    inProgress.update_progress_verdict('Generating Plots (4/5)')
     _plot5_cfgs = PLOT_PROPS['OPTUNA']['plot5']
     fig5 = vis.plot_contour(study, params=all_params)
     num_subplots = len(fig5.data)
@@ -414,8 +421,10 @@ def OPTUNA_GENERATE_PLOTS (study: optuna.study.Study, algo_name: str):
     )
     fig5.update_traces(**_plot5_cfgs['traces'])
     _UPDATE_FONT_PROPERTIES(fig5, font_settings, title_settings)
-    CHECK_DIR(OUT_DIR)
-    pio.write_image(fig5, f'output/{algo_name}_contour.png', format='png', scale=2)
+    CHECK_DIR(study_db_path)
+    pio.write_image(fig5, os.path.join(study_db_path, f'{algo_name}_contour.png'), format='png', scale=2)
+
+    inProgress.update_progress_verdict('All Plots Done (5/5)!')
 
 @setup_Matplotlib_globalFontSettings
 def SHAP_GENERATE_PLOT (model, X_train: pd.DataFrame, y_train: pd.DataFrame, model_algorithm: str, 
@@ -640,14 +649,21 @@ def MODEL_BUILD_GENERATE_RESULTS (regressor, featureList: list, trainFilePath: s
     inProgressUpdateFunc('Done !!')
     return results
 
-def _TRY_CREATE_OPTUNA_STUDY_SQLITE(algo_name:str) -> optuna.study.Study:
+# Return the optuna..study.Study along with the path where study is saved
+def _TRY_CREATE_OPTUNA_STUDY_SQLITE(algo_name:str):
+    curr_datetime=datetime.now().strftime("%Y%m%d%H%M%S")
+    study_name = f'{algo_name}_{curr_datetime}'
+    db_path = os.path.join(OUT_DIR, OPTUNA_STUDIES_DIR, algo_name, study_name)
+    db_url = f"sqlite:///{os.path.join(db_path, f'{study_name}.db')}"
+
     try:
-        CHECK_DIR(OUT_DIR)
-        my_study = optuna.create_study(direction='maximize', study_name=algo_name, storage=f'sqlite:///{OUT_DIR}/{algo_name}_optuna_study.db')
+        CHECK_DIR(db_path)
+        my_study = optuna.create_study(direction='maximize', study_name=study_name, storage=db_url)
     except Exception as e:
         print(f'Cannot save optuna study for Exception {str(e)}')
-        my_study = optuna.create_study(direction='maximize', study_name='Random_Forest')
-    return my_study
+        my_study = optuna.create_study(direction='maximize', study_name=study_name)
+
+    return my_study, db_path
 
 PARAM_GRID_KEYS_NOT_FOR_HP_OPTIM = {'FEATURES','METHOD','SCORING','CROSS_FOLD_VALID'}
 
@@ -772,14 +788,14 @@ def RF_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
             ).mean()
         
         IN_PROGRESS._CREATE_OPTUNA_PROGRESS()
-        rf_study = _TRY_CREATE_OPTUNA_STUDY_SQLITE('RF')
+        rf_study, study_db_path = _TRY_CREATE_OPTUNA_STUDY_SQLITE('RF')
         print(my_config_manager.get('optuna.total_trials'))
         rf_study.optimize(
             func=RF_OBJECTIVE, n_trials=my_config_manager.get('optuna.total_trials'), callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
         )
         IN_PROGRESS._COMPLETE_OPTUNA_PROGRESS()
         results = rf_study.best_params
-        OPTUNA_GENERATE_PLOTS(rf_study, 'RF')
+        OPTUNA_GENERATE_PLOTS(rf_study, 'RF', study_db_path, IN_PROGRESS)
         return results
     else:
         raise Exception(f"Unknown Method for HP_OPTIMIZATION: {PROCESS_PARAMS['METHOD']}")
@@ -880,13 +896,13 @@ def SVM_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
             ).mean()
         
         IN_PROGRESS._CREATE_OPTUNA_PROGRESS()
-        svm_study = _TRY_CREATE_OPTUNA_STUDY_SQLITE('SVM')
+        svm_study, study_db_path = _TRY_CREATE_OPTUNA_STUDY_SQLITE('SVM')
         svm_study.optimize(
             func=SVM_OBJECTIVE, n_trials=my_config_manager.get('optuna.total_trials'), callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
         )
         IN_PROGRESS._COMPLETE_OPTUNA_PROGRESS()
         results = svm_study.best_params
-        OPTUNA_GENERATE_PLOTS(svm_study, 'SVC')
+        OPTUNA_GENERATE_PLOTS(svm_study, 'SVC', study_db_path, IN_PROGRESS)
         return results
     else:
         raise Exception(f"Unknown Method for HP_OPTIMIZATION: {PROCESS_PARAMS['METHOD']}")
@@ -984,13 +1000,13 @@ def LDA_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
             ).mean()
         
         IN_PROGRESS._CREATE_OPTUNA_PROGRESS()
-        lda_study = _TRY_CREATE_OPTUNA_STUDY_SQLITE('LDA')
+        lda_study, study_db_path = _TRY_CREATE_OPTUNA_STUDY_SQLITE('LDA')
         lda_study.optimize(
             func=LDA_OBJECTIVE, n_trials=my_config_manager.get('optuna.total_trials')*10, callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
         )
         IN_PROGRESS._COMPLETE_OPTUNA_PROGRESS()
         results = lda_study.best_params
-        OPTUNA_GENERATE_PLOTS(lda_study, 'LDA')
+        OPTUNA_GENERATE_PLOTS(lda_study, 'LDA', study_db_path, IN_PROGRESS)
         return results
     else:
         raise Exception(f"Unknown Method for HP_OPTIMIZATION: {PROCESS_PARAMS['METHOD']}")
@@ -1109,13 +1125,13 @@ def LR_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
             ).mean()
         
         IN_PROGRESS._CREATE_OPTUNA_PROGRESS()
-        lr_study = _TRY_CREATE_OPTUNA_STUDY_SQLITE('LR')
+        lr_study, study_db_path = _TRY_CREATE_OPTUNA_STUDY_SQLITE('LR')
         lr_study.optimize(
             func=LR_OBJECTIVE, n_trials=my_config_manager.get('optuna.total_trials')*10, callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
         )
         IN_PROGRESS._COMPLETE_OPTUNA_PROGRESS()
         results = lr_study.best_params
-        OPTUNA_GENERATE_PLOTS(lr_study, 'LR')
+        OPTUNA_GENERATE_PLOTS(lr_study, 'LR', study_db_path, IN_PROGRESS)
         return results
     else:
         raise Exception(f"Unknown Method for HP_OPTIMIZATION: {PROCESS_PARAMS['METHOD']}")
@@ -1219,13 +1235,13 @@ def KNN_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
             ).mean()
         
         IN_PROGRESS._CREATE_OPTUNA_PROGRESS()
-        knn_study = _TRY_CREATE_OPTUNA_STUDY_SQLITE('KNN')
+        knn_study, study_db_path = _TRY_CREATE_OPTUNA_STUDY_SQLITE('KNN')
         knn_study.optimize(
             func=KNN_OBJECTIVE, n_trials=my_config_manager.get('optuna.total_trials')*10, callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
         )
         IN_PROGRESS._COMPLETE_OPTUNA_PROGRESS()
         results = knn_study.best_params
-        OPTUNA_GENERATE_PLOTS(knn_study, 'KNN')
+        OPTUNA_GENERATE_PLOTS(knn_study, 'KNN', study_db_path, IN_PROGRESS)
         return results
     else:
         raise Exception(f"Unknown Method for HP_OPTIMIZATION: {PROCESS_PARAMS['METHOD']}")
@@ -1347,13 +1363,13 @@ def GB_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
             ).mean()
         
         IN_PROGRESS._CREATE_OPTUNA_PROGRESS()
-        gb_study = _TRY_CREATE_OPTUNA_STUDY_SQLITE('GB')
+        gb_study, study_db_path = _TRY_CREATE_OPTUNA_STUDY_SQLITE('GB')
         gb_study.optimize(
             func=GB_OBJECTIVE, n_trials=my_config_manager.get('optuna.total_trials'), callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
         )
         IN_PROGRESS._COMPLETE_OPTUNA_PROGRESS()
         results = gb_study.best_params
-        OPTUNA_GENERATE_PLOTS(gb_study, 'GB')
+        OPTUNA_GENERATE_PLOTS(gb_study, 'GB', study_db_path, IN_PROGRESS)
         return results
     else:
         raise Exception(f"Unknown Method for HP_OPTIMIZATION: {PROCESS_PARAMS['METHOD']}")
@@ -1503,7 +1519,7 @@ def MLP_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
             ).mean()
         
         IN_PROGRESS._CREATE_OPTUNA_PROGRESS()
-        mlp_study = _TRY_CREATE_OPTUNA_STUDY_SQLITE('MLP')
+        mlp_study, study_db_path = _TRY_CREATE_OPTUNA_STUDY_SQLITE('MLP')
         mlp_study.optimize(
             func=MLP_OBJECTIVE, n_trials=my_config_manager.get('optuna.total_trials'), callbacks=[IN_PROGRESS._UPDATE_OPTUNA_PROGRESS_BAR]
         )
@@ -1519,7 +1535,7 @@ def MLP_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
         del[results['n_layers']]
         results['hidden_layer_sizes'] = tuple(hidden_layer_sizes)
 
-        OPTUNA_GENERATE_PLOTS(mlp_study, 'MLP')
+        OPTUNA_GENERATE_PLOTS(mlp_study, 'MLP', study_db_path, IN_PROGRESS)
         return results
     else:
         raise Exception(f"Unknown Method for HP_OPTIMIZATION: {PROCESS_PARAMS['METHOD']}")
@@ -1631,3 +1647,64 @@ def MLP_MODEL_BUILD_PROCESS (MlpMB_ValidatedInputs: dict, trainFilePath: str, te
         inProgressUpdateFunc=inProgressUpdateFunc
     )
     return results
+
+found_studies={} # {RF: [s1,s2], SVM: [s3]}
+found_studies_details={} # {s1: 'detail1', s2:'detail2', s3:'detail3'}
+
+def _GET_ALL_STUDIES (algo_name: str, algo_name_map: dict[str, str]):
+    studies_dir_path = os.path.join(OUT_DIR, OPTUNA_STUDIES_DIR)
+    # Throws exception if no study found
+    if not os.path.isdir(studies_dir_path) or not os.listdir(studies_dir_path):
+        raise Exception('No Optuna Studies Found !!')
+
+    def load_studies_for_algo(algo_name:str):
+        studies_dir_path_for_algo = os.path.join(studies_dir_path, algo_name)
+        if not os.path.isdir(studies_dir_path_for_algo) or not os.listdir(studies_dir_path_for_algo):
+            return False
+        
+        all_studies_for_this_algo = [entry.name for entry in os.scandir(studies_dir_path_for_algo) if entry.is_dir()]
+        found_studies[algo_name] = all_studies_for_this_algo
+        return True
+    
+    if not load_studies_for_algo(algo_name):
+        raise Exception(f'No Optuna Studies Found for {algo_name}!!')
+
+    for algoKey in algo_name_map.keys():
+        if algoKey!=algo_name:
+            load_studies_for_algo(algoKey)
+    
+    return found_studies
+
+def _GET_STUDY_DETAIL (algo_name:str, study_name:str):
+    if study_name in found_studies_details:
+        return found_studies_details[study_name]
+    
+    # Fetch details
+    db_path = os.path.join(OUT_DIR, OPTUNA_STUDIES_DIR, algo_name, study_name, f'{study_name}.db')
+    db_url = f'sqlite:///{db_path}'
+    studies = optuna.study.get_all_study_summaries(storage=db_url)
+
+    if len(studies) == 1:
+        my_study = optuna.load_study(study_name=study_name, storage=db_url)
+        trials_df = my_study.trials_dataframe()
+        start, end = trials_df["datetime_start"].min(), trials_df["datetime_complete"].max()
+        print(f"Study found: {my_study.study_name}")
+        details = {
+            'study_name': my_study.study_name,
+            'datetime_started': start.isoformat(),
+            'datetime_complete': end.isoformat(),
+            'duration (sec.)': (end-start).total_seconds(),
+            'num_of_trials': int((trials_df['state'] == 'COMPLETE').sum()),
+            'best_trial': my_study.best_trial.number,
+            'best_params': my_study.best_params
+        }
+        found_studies_details[study_name] = jsonDumps(details, indent=3)
+        return found_studies_details[study_name]
+    else:
+        raise Exception("Error: More than one or no study found.")
+    
+def RE_PLOT_OPTUNA_GRAPHS(algo_name:str, study_name:str, inProgress:InProgressWindow):
+    db_path = os.path.join(OUT_DIR, OPTUNA_STUDIES_DIR, algo_name, study_name)
+    db_url = f"sqlite:///{os.path.join(db_path, f'{study_name}.db')}"
+    my_study = optuna.load_study(study_name=study_name, storage=db_url)
+    OPTUNA_GENERATE_PLOTS(my_study, algo_name, db_path, inProgress)

@@ -660,6 +660,137 @@ class RankedFeaturesSelectDialog(CTkToplevel):
         self.selected_features_var.set(",".join(self.selected_features))
         self.destroy()  # Close the TopLevel
 
+class RegenerateOptunaPlots(CTkToplevel):
+    def __init__(self, parent:CTkFrame, algo_name:str, algo_map:dict[str, dict], my_font:str):
+        # PRE_PROCESS : Throw warning if no study found
+        self.algo_name_map = {k:v['algo_name'] for k,v in algo_map.items()} # {RF:Random Forest, SVM:Support Vector Macghone, ..}
+        self.algo_abbr_map = {v['algo_name']:k for k,v in algo_map.items()}
+        from util.ml.functions import _GET_ALL_STUDIES
+        self.studies_found = _GET_ALL_STUDIES(algo_name, self.algo_name_map) # Throws Exception
+        print('self.studies_found = ', self.studies_found)
+
+        super().__init__(parent)
+        self.parent = parent
+        self.title(f'Re-Generate Optuna Plots')
+        self.geometry("600x370")
+        #self.resizable(False, False)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        self.configure(fg_color=COLORS['SKYBLUE_FG'])
+
+        #VARS
+        self.default_study_opt = "-- select a study --"
+        self.defaut_study_detail='...'
+        self.selected_algo_name_var = StringVar(parent, self.algo_name_map[algo_name])
+        self.selected_study_name_var = StringVar(parent, self.default_study_opt)
+        self.selected_study_details_var =  StringVar(parent, self.defaut_study_detail)
+        self.my_font = my_font
+
+        self.scrollable_frame = CTkScrollableFrame(
+            self, 
+            label_text=f'Request for Plot Regeneration', 
+            label_font=my_font,
+            label_fg_color=COLORS['LIGHTRED_FG'],
+            label_text_color='white',
+            scrollbar_button_color='#333',
+            scrollbar_button_hover_color=COLORS['GREY_HOVER_FG'],
+            fg_color=COLORS['SKYBLUE_FG']
+        )
+        self.scrollable_frame.grid(row=0, column=0, padx=10, pady=(10, 0), sticky=NSEW)
+        self.scrollable_frame.grid_columnconfigure(1, weight=1)
+        self.scrollable_frame.grid_rowconfigure(2, weight=1)
+
+        self.render_form()
+
+        self.submit_button = CTkButton(
+            self, 
+            text="Submit", 
+            font=my_font,
+            fg_color=COLORS['MEDIUMGREEN_FG'],
+            hover_color=COLORS['MEDIUMGREEN_HOVER_FG'],
+            text_color='white',
+            corner_radius=0,
+            width=100,
+            border_spacing=0,
+            command=self.submit
+        )
+        self.submit_button.grid(row=1, column=0, padx=10, pady=10, sticky=EW)
+
+    def render_form(self):
+        # ALGO_NAME
+        self.algo_name_label = CTkLabel(master=self.scrollable_frame, text="Algorithm:", font=self.my_font)
+        self.algo_name_menu = self._create_optionMenu(
+            master=self.scrollable_frame, 
+            variable=self.selected_algo_name_var,
+            values=[v for k,v in self.algo_name_map.items() if k in self.studies_found.keys()], cmd=self.select_algo
+        )
+        self.algo_name_label.grid(row=0, column=0, padx=10, pady=5, sticky=NSEW)
+        self.algo_name_menu.grid(row=0, column=1, padx=10, pady=5, sticky=NSEW)
+
+        # STUDY NAME
+        self.study_name_label = CTkLabel(master=self.scrollable_frame, text="Study:", font=self.my_font)
+        self.study_name_menu = self._create_optionMenu(
+            master=self.scrollable_frame, 
+            variable=self.selected_study_name_var,
+            values=[self.default_study_opt]+self.studies_found[self.algo_abbr_map[self.selected_algo_name_var.get()]], 
+            cmd=self.select_study
+        )
+        self.study_name_label.grid(row=1, column=0, padx=10, pady=5, sticky=NSEW)
+        self.study_name_menu.grid(row=1, column=1, padx=10, pady=5, sticky=NSEW)
+
+        # STUDY_DETAILS
+        self.study_details_label = CTkLabel(master=self.scrollable_frame, text="Details:", font=self.my_font)
+        self.study_details_menu = SyncableTextBox(
+            master=self.scrollable_frame,
+            text_variable=self.selected_study_details_var,
+            my_font=self.my_font
+        )
+        self.study_details_label.grid(row=2, column=0, padx=10, pady=5, sticky=NSEW)
+        self.study_details_menu.grid(row=2, column=1, padx=10, pady=5, sticky=NSEW)
+
+    def select_study(self, choice: str):
+        if choice!=self.default_study_opt and self.default_study_opt in self.study_name_menu.cget('values'):  
+            # Remove placeholder only once
+            self.study_name_menu.configure(values=self.studies_found[self.algo_abbr_map[self.selected_algo_name_var.get()]])
+        
+        from util.ml.functions import _GET_STUDY_DETAIL
+        fetched_study_details = _GET_STUDY_DETAIL(
+            self.algo_abbr_map[self.selected_algo_name_var.get()], 
+            self.selected_study_name_var.get()
+        )
+        self.selected_study_details_var.set(fetched_study_details)
+
+    def select_algo(self, choice:str):
+        self.study_name_menu.configure(values=[self.default_study_opt]+self.studies_found[self.algo_abbr_map[choice]])
+        self.selected_study_name_var.set(self.default_study_opt)
+        self.selected_study_details_var.set(self.defaut_study_detail)
+
+    def submit(self):
+        from util.services import REPLOT_OPTUNA_SUBMIT
+        REPLOT_OPTUNA_SUBMIT(
+            master=self.parent, 
+            loading_gif_path=getImgPath('optimization.gif'), 
+            font=self.my_font, 
+            algo_name=self.algo_abbr_map[self.selected_algo_name_var.get()],
+            study_name=self.selected_study_name_var.get()
+        )
+
+    def _create_optionMenu(self, master, variable, values, cmd):
+        return CTkOptionMenu(
+            master=master,
+            variable=variable,
+            values=values,
+            command=cmd,
+            font=self.my_font,
+            dropdown_font=self.my_font,
+            corner_radius=0,
+            width=200,
+            anchor=CENTER,
+            button_color=COLORS['GREY_FG'],
+            button_hover_color=COLORS['GREY_HOVER_FG'],
+            fg_color=COLORS['GREY_FG']    
+        )
+
 class MultiSelectDialog(CTkToplevel):
     def __init__(self, parent:CTkFrame, 
             whatToChoosePlural:str, options:list[str], selectedOptions_StringVar: StringVar, 
