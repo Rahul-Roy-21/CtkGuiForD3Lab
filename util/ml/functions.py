@@ -45,6 +45,9 @@ def setup_Matplotlib_globalFontSettings(func):
         plt.rcParams['font.size'] = my_config_manager.get('plot_properties.RC_PARAMS.FONT_SIZE')
         plt.rcParams['font.weight'] = my_config_manager.get('plot_properties.RC_PARAMS.FONT_WEIGHT')
         plt.rcParams['axes.labelweight'] = my_config_manager.get('plot_properties.RC_PARAMS.FONT_WEIGHT')
+        plt.rcParams["figure.autolayout"]=True
+        plt.rcParams['figure.figsize'] = 5,5
+        plt.rcParams["figure.dpi"]=my_config_manager.get('plot_properties.RC_PARAMS.FIGURE_DPI')
 
         return func(*args, **kwargs)  # Call the original function
     return wrapper
@@ -495,7 +498,7 @@ def SHAP_GENERATE_PLOT (model, X_train: pd.DataFrame, y_train: pd.DataFrame, mod
 
     #Modify SHAP's internal figure AFTER it is created
     fig = plt.gcf()
-    fig.set_size_inches(10, 8)  # Adjust figure size
+    fig.set_size_inches(14,10)  # Adjust figure size
     plt.xticks(**font_settings)
     plt.yticks(**font_settings)
     plt.xlabel("SHAP Value", **font_settings)
@@ -596,7 +599,7 @@ def MODEL_BUILD_GENERATE_RESULTS (regressor, featureList: list, trainFilePath: s
     roc_te = RocCurveDisplay.from_estimator(regressor, x_test, y_test)
     auc_value = roc_auc_score(y_test, y_score2)
     plt.clf()
-    fig,ax = plt.subplots(1, figsize=(10,10))
+    fig,ax = plt.subplots(1, figsize=(100,100))
     roc_te.plot(
         color=PLOT_PROPS['ROC_CURVE']['COLOR'], 
         lw=PLOT_PROPS['ROC_CURVE']['LW'],
@@ -622,7 +625,7 @@ def MODEL_BUILD_GENERATE_RESULTS (regressor, featureList: list, trainFilePath: s
     roc_tr = RocCurveDisplay.from_estimator(regressor, x_train, y_train)
     auc_value = roc_auc_score(y_train, y_score1)
     plt.clf()
-    fig,ax = plt.subplots(1, figsize=(10,10))
+    fig,ax = plt.subplots(1, figsize=(100,100))
     roc_tr.plot(
         color=PLOT_PROPS['ROC_CURVE']['COLOR'], 
         lw=PLOT_PROPS['ROC_CURVE']['LW'],
@@ -1388,10 +1391,11 @@ def MLP_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
     y_train = trainDF.iloc[:, -1]
     scaler = StandardScaler()
     x_train_scaled = scaler.fit_transform(x_train)
+    mlp_max_iter_value = my_config_manager.get('mlp_max_iter')
 
     # GRID_SEARCH
     if PROCESS_PARAMS['METHOD']=='GridSearchCV':
-        mlp_estimator = MLPClassifier(max_iter=1000, random_state=None, verbose=True)
+        mlp_estimator = MLPClassifier(max_iter=mlp_max_iter_value, random_state=None, verbose=True)
         _PARAM_GRID = {}
         for k,v in HP_OPTIM_INPUTS.items():
             if k in PARAM_GRID_KEYS_NOT_FOR_HP_OPTIM:
@@ -1435,7 +1439,7 @@ def MLP_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
         return results
 
     elif PROCESS_PARAMS['METHOD']=='RandomizedSearchCV':
-        mlp_estimator = MLPClassifier(max_iter=1000, random_state=None, verbose=True)
+        mlp_estimator = MLPClassifier(max_iter=mlp_max_iter_value, random_state=None, verbose=True)
         _PARAM_GRID = {}
         for k,v in HP_OPTIM_INPUTS.items():
             if k in PARAM_GRID_KEYS_NOT_FOR_HP_OPTIM:
@@ -1510,7 +1514,7 @@ def MLP_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
                 solver=solver,
                 alpha=alpha,
                 learning_rate=learning_rate,
-                max_iter=1000,  # You can adjust the number of iterations
+                max_iter=mlp_max_iter_value,  # You can adjust the number of iterations
                 random_state=42,
                 verbose=False
             )

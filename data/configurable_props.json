@@ -1,8 +1,9 @@
 {
     "feature_selection": {
         "ranking_method": "MDF",
-        "min_features_selected": 12
+        "min_features_selected": 4
     },
+    "mlp_max_iter": 1000,
     "optuna": {
         "total_trials": 100
     },
@@ -20,9 +21,10 @@
             "FONT_STYLE": "Times New Roman"
         },
         "RC_PARAMS": {
-            "FONT_SIZE": 15,
+            "FONT_SIZE": 16,
             "FONT_WEIGHT": "bold",
-            "FONT_STYLE": "Times New Roman"
+            "FONT_STYLE": "Times New Roman",
+            "FIGURE_DPI": 500
         },
         "SHAP": {
             "ENABLED": true,

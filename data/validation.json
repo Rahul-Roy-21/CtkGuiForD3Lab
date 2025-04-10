@@ -13,11 +13,21 @@
             "dtype": "int",
             "utype": "var",
             "range": [
-                5,
+                4,
                 50
             ],
             "default": 10
         }
+    },
+    "mlp_max_iter": {
+        "dtype": "int",
+        "utype": "var",
+        "range": [
+            500,
+            20000,
+            500
+        ],
+        "default": 1000
     },
     "optuna": {
         "total_trials": {
@@ -111,9 +121,19 @@
                 "utype": "var",
                 "range": [
                     10,
-                    30
+                    20
                 ],
-                "default": 12
+                "default": 16
+            },
+            "FIGURE_DPI": {
+                "dtype": "int",
+                "utype": "var",
+                "range": [
+                    100,
+                    1000,
+                    50
+                ],
+                "default": 500
             },
             "FONT_WEIGHT": {
                 "dtype": "str",
@@ -925,7 +945,7 @@
                             "title": {
                                 "dtype": "str",
                                 "utype": "var",
-                                "value": "Objective Scale"
+                                "value": "No. of Trials"
                             }
                         },
                         "colorscale": {

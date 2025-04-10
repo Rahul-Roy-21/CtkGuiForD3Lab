@@ -62,7 +62,7 @@
                     "min_val": 50,
                     "max_val": 200,
                     "max_steps": 10,
-                    "default_from": 90,
+                    "default_from": 50,
                     "default_to": 100,
                     "default_max_steps": 10
                 },
@@ -77,20 +77,20 @@
                 "max_depth": {
                     "min_val": 1,
                     "max_val": 30,
-                    "default_from": 11,
-                    "default_to": 12
+                    "default_from": 1,
+                    "default_to": 5
                 },
                 "min_samples_split": {
                     "min_val": 2,
                     "max_val": 10,
                     "default_from": 2,
-                    "default_to": 3
+                    "default_to": 5
                 },
                 "min_samples_leaf": {
                     "min_val": 1,
                     "max_val": 10,
                     "default_from": 1,
-                    "default_to": 2
+                    "default_to": 5
                 }
             },
             "model_build": {
@@ -319,7 +319,7 @@
                     "default_val": null
                 },
                 "tol": {
-                    "default_val": 1e-3
+                    "default_val": 1e-4
                 },
                 "store_covariance": {
                     "default_idx": 1,
@@ -493,14 +493,14 @@
                     "default": 5
                 },
                 "n_neighbors": {
-                    "min_val": 2,
-                    "max_val": 20,
-                    "default_from": 2,
+                    "min_val": 1,
+                    "max_val": 50,
+                    "default_from": 1,
                     "default_to": 10
                 },
                 "leaf_size": {
-                    "min_val": 10,
-                    "max_val": 50,
+                    "min_val": 1,
+                    "max_val": 100,
                     "default_from": 10,
                     "default_to": 50
                 },
@@ -595,7 +595,7 @@
                     "min_val": 10,
                     "max_val": 200,
                     "max_steps": 10,
-                    "default_from": 10,
+                    "default_from": 50,
                     "default_to": 200,
                     "default_max_steps": 10
                 },
@@ -622,10 +622,10 @@
                     "min_val": 1,
                     "max_val": 30,
                     "default_from": 1,
-                    "default_to": 10
+                    "default_to": 5
                 },
                 "min_samples_split": {
-                    "min_val": 2,
+                    "min_val": 1,
                     "max_val": 10,
                     "default_from": 2,
                     "default_to": 5
@@ -652,7 +652,7 @@
                     "default_val": 100
                 },
                 "subsample": {
-                    "default_val": 0.1
+                    "default_val": 1.0
                 },
                 "criterion": {
                     "default_idx": 0,
