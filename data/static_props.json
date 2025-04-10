@@ -509,6 +509,22 @@
                     "max_val": 5,
                     "default_from": 1,
                     "default_to": 2
+                },
+                "weights": {
+                    "options": [
+                        "uniform",
+                        "distance"
+                    ],
+                    "min_num_of_choices": 2
+                },
+                "algorithm": {
+                    "options": [
+                        "auto",
+                        "ball_tree",
+                        "kd_tree",
+                        "brute"
+                    ],
+                    "min_num_of_choices": 2
                 }
             },
             "model_build": {

@@ -238,6 +238,8 @@ def KNN_HP_OPTIM_SUBMIT (master:CTk, loading_gif_path:str, KNN_inputs: dict, KNN
         'p': {k:v.get() for k,v in KNN_inputs['p'].items()},
         'leaf_size': {k:v.get() for k,v in KNN_inputs['leaf_size'].items()},
         'n_neighbors': {k:v.get() for k,v in KNN_inputs['n_neighbors'].items()},
+        'weights': KNN_inputs['weights'].get().split(','),
+        'algorithm': KNN_inputs['algorithm'].get().split(','),
     }
 
     # GUI remains responsive on main thread, the optimization runs on seperate thread

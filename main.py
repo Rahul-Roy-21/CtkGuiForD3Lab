@@ -437,7 +437,21 @@ KNN_HP_OPTIM_DATA_AND_VARS = {
                 min_val=KNN_HP_OPTIM_DATA['p']['min_val'],
                 max_val=KNN_HP_OPTIM_DATA['p']['max_val'],
             ),
-            'grid': {'row':2,'col':0,'colspan':1}
+            'grid': {'row':0,'col':1,'colspan':1}
+        },
+        'weights': {
+            'type': MultiSelectEntryField(
+                options=KNN_HP_OPTIM_DATA['weights']['options'],
+                selected_opt_var=ctk.StringVar(value=','.join(KNN_HP_OPTIM_DATA['weights']['options']))
+            ),
+            'grid': {'row':1,'col':1,'colspan':1}
+        },
+        'algorithm': {
+            'type': MultiSelectEntryField(
+                options=KNN_HP_OPTIM_DATA['algorithm']['options'],
+                selected_opt_var=ctk.StringVar(value=','.join(KNN_HP_OPTIM_DATA['algorithm']['options']))
+            ),
+            'grid': {'row':2,'col':0,'colspan':2}
         },
     }
 }
@@ -452,7 +466,7 @@ KNN_hp_optim_panel = HyperParamOptim_AlgoLabelFrame(
     SELECTED_FEATURES=SELECTED_FEATURES,
     trainVar=TRAIN_FILE_PATH,
     testVar=TEST_FILE_PATH,
-    hyperParamsFrame_NumOfCells=1
+    hyperParamsFrame_NumOfCells=2
 )._GET_ALGO_LABELFRAME()
 
 #GB

@@ -1224,10 +1224,13 @@ def KNN_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
             p = trial.suggest_int(
                 'p', _PARAM_GRID['p']['_FROM'], _PARAM_GRID['p']['_TO']
             )
+            weights = trial.suggest_categorical("weights", _PARAM_GRID['weights'])
+            algorithm = trial.suggest_categorical("algorithm", _PARAM_GRID['algorithm'])
+
             model = KNeighborsClassifier(
                 n_neighbors=n_neighbors, 
-                leaf_size=leaf_size, 
-                p=p
+                leaf_size=leaf_size, p=p, 
+                weights=weights, algorithm=algorithm
             )
             return cross_val_score(
                 model, x_train_scaled, y_train, 
