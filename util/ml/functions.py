@@ -686,6 +686,8 @@ def RF_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
     columnsToSelect = PROCESS_PARAMS['FEATURES']
     x_train = trainDF.loc[:, columnsToSelect]
     y_train = trainDF.iloc[:, -1]
+    scaler = StandardScaler()
+    x_train_scaled = scaler.fit_transform(x_train)
 
     # GRID_SEARCH
     if PROCESS_PARAMS['METHOD']=='GridSearchCV':
@@ -702,7 +704,7 @@ def RF_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
             scoring=PROCESS_PARAMS['SCORING'], cv=PROCESS_PARAMS['CROSS_FOLD_VALID'], 
             verbose=2, n_jobs=4
         )
-        HP_OPTIM_METHOD_INSTANCE.fit(x_train, y_train)
+        HP_OPTIM_METHOD_INSTANCE.fit(x_train_scaled, y_train)
 
         xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
         CHECK_DIR(OUT_DIR)
@@ -733,7 +735,7 @@ def RF_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
             scoring=PROCESS_PARAMS['SCORING'], cv=PROCESS_PARAMS['CROSS_FOLD_VALID'], 
             verbose=2, n_jobs=4
         )
-        HP_OPTIM_METHOD_INSTANCE.fit(x_train, y_train)
+        HP_OPTIM_METHOD_INSTANCE.fit(x_train_scaled, y_train)
 
         xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
         CHECK_DIR(OUT_DIR)
@@ -751,8 +753,6 @@ def RF_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
         return results
         
     elif PROCESS_PARAMS['METHOD']=='Optuna':
-        scaler = StandardScaler()
-        x_train_scaled = scaler.fit_transform(x_train)
         _PARAM_GRID = {k:v for k,v in HP_OPTIM_INPUTS.items() if k not in PARAM_GRID_KEYS_NOT_FOR_HP_OPTIM}
         print('PARAM_GRID: ', _PARAM_GRID)
 
@@ -811,6 +811,8 @@ def SVM_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
     columnsToSelect = PROCESS_PARAMS['FEATURES']
     x_train = trainDF.loc[:, columnsToSelect]
     y_train = trainDF.iloc[:, -1]
+    scaler = StandardScaler()
+    x_train_scaled = scaler.fit_transform(x_train)
 
     # GRID_SEARCH
     if PROCESS_PARAMS['METHOD']=='GridSearchCV':
@@ -827,7 +829,7 @@ def SVM_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
             scoring=PROCESS_PARAMS['SCORING'], cv=PROCESS_PARAMS['CROSS_FOLD_VALID'], 
             verbose=2, n_jobs=4
         )
-        HP_OPTIM_METHOD_INSTANCE.fit(x_train, y_train)
+        HP_OPTIM_METHOD_INSTANCE.fit(x_train_scaled, y_train)
 
         xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
         CHECK_DIR(OUT_DIR)
@@ -858,7 +860,7 @@ def SVM_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
             scoring=PROCESS_PARAMS['SCORING'], cv=PROCESS_PARAMS['CROSS_FOLD_VALID'], 
             verbose=2, n_jobs=4
         )
-        HP_OPTIM_METHOD_INSTANCE.fit(x_train, y_train)
+        HP_OPTIM_METHOD_INSTANCE.fit(x_train_scaled, y_train)
 
         xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
         CHECK_DIR(OUT_DIR)
@@ -876,8 +878,6 @@ def SVM_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
         return results
         
     elif PROCESS_PARAMS['METHOD']=='Optuna':
-        scaler = StandardScaler()
-        x_train_scaled = scaler.fit_transform(x_train)
         _PARAM_GRID = {k:v for k,v in HP_OPTIM_INPUTS.items() if k not in PARAM_GRID_KEYS_NOT_FOR_HP_OPTIM}
         print('PARAM_GRID: ', _PARAM_GRID)
 
@@ -918,6 +918,8 @@ def LDA_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
     columnsToSelect = PROCESS_PARAMS['FEATURES']
     x_train = trainDF.loc[:, columnsToSelect]
     y_train = trainDF.iloc[:, -1]
+    scaler = StandardScaler()
+    x_train_scaled = scaler.fit_transform(x_train)
 
     # GRID_SEARCH
     if PROCESS_PARAMS['METHOD']=='GridSearchCV':
@@ -934,7 +936,7 @@ def LDA_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
             scoring=PROCESS_PARAMS['SCORING'], cv=PROCESS_PARAMS['CROSS_FOLD_VALID'], 
             verbose=2, n_jobs=4
         )
-        HP_OPTIM_METHOD_INSTANCE.fit(x_train, y_train)
+        HP_OPTIM_METHOD_INSTANCE.fit(x_train_scaled, y_train)
 
         xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
         CHECK_DIR(OUT_DIR)
@@ -965,7 +967,7 @@ def LDA_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
             scoring=PROCESS_PARAMS['SCORING'], cv=PROCESS_PARAMS['CROSS_FOLD_VALID'], 
             verbose=2, n_jobs=4
         )
-        HP_OPTIM_METHOD_INSTANCE.fit(x_train, y_train)
+        HP_OPTIM_METHOD_INSTANCE.fit(x_train_scaled, y_train)
 
         xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
         CHECK_DIR(OUT_DIR)
@@ -983,8 +985,6 @@ def LDA_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
         return results
         
     elif PROCESS_PARAMS['METHOD']=='Optuna':
-        scaler = StandardScaler()
-        x_train_scaled = scaler.fit_transform(x_train)
         _PARAM_GRID = {k:v for k,v in HP_OPTIM_INPUTS.items() if k not in PARAM_GRID_KEYS_NOT_FOR_HP_OPTIM}
         print('PARAM_GRID: ', _PARAM_GRID)
 
@@ -1022,6 +1022,8 @@ def LR_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
     columnsToSelect = PROCESS_PARAMS['FEATURES']
     x_train = trainDF.loc[:, columnsToSelect]
     y_train = trainDF.iloc[:, -1]
+    scaler = StandardScaler()
+    x_train_scaled = scaler.fit_transform(x_train)
 
     # GRID_SEARCH
     if PROCESS_PARAMS['METHOD']=='GridSearchCV':
@@ -1038,7 +1040,7 @@ def LR_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
             scoring=PROCESS_PARAMS['SCORING'], cv=PROCESS_PARAMS['CROSS_FOLD_VALID'], 
             verbose=2, n_jobs=4
         )
-        HP_OPTIM_METHOD_INSTANCE.fit(x_train, y_train)
+        HP_OPTIM_METHOD_INSTANCE.fit(x_train_scaled, y_train)
 
         xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
         CHECK_DIR(OUT_DIR)
@@ -1069,7 +1071,7 @@ def LR_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
             scoring=PROCESS_PARAMS['SCORING'], cv=PROCESS_PARAMS['CROSS_FOLD_VALID'], 
             verbose=2, n_jobs=4
         )
-        HP_OPTIM_METHOD_INSTANCE.fit(x_train, y_train)
+        HP_OPTIM_METHOD_INSTANCE.fit(x_train_scaled, y_train)
 
         xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
         CHECK_DIR(OUT_DIR)
@@ -1087,8 +1089,6 @@ def LR_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
         return results
         
     elif PROCESS_PARAMS['METHOD']=='Optuna':
-        scaler = StandardScaler()
-        x_train_scaled = scaler.fit_transform(x_train)
         _PARAM_GRID = {k:v for k,v in HP_OPTIM_INPUTS.items() if k not in PARAM_GRID_KEYS_NOT_FOR_HP_OPTIM}
         print('PARAM_GRID: ', _PARAM_GRID)
 
@@ -1147,6 +1147,8 @@ def KNN_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
     columnsToSelect = PROCESS_PARAMS['FEATURES']
     x_train = trainDF.loc[:, columnsToSelect]
     y_train = trainDF.iloc[:, -1]
+    scaler = StandardScaler()
+    x_train_scaled = scaler.fit_transform(x_train)
 
     # GRID_SEARCH
     if PROCESS_PARAMS['METHOD']=='GridSearchCV':
@@ -1163,7 +1165,7 @@ def KNN_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
             scoring=PROCESS_PARAMS['SCORING'], cv=PROCESS_PARAMS['CROSS_FOLD_VALID'], 
             verbose=2, n_jobs=4
         )
-        HP_OPTIM_METHOD_INSTANCE.fit(x_train, y_train)
+        HP_OPTIM_METHOD_INSTANCE.fit(x_train_scaled, y_train)
 
         xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
         CHECK_DIR(OUT_DIR)
@@ -1194,7 +1196,7 @@ def KNN_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
             scoring=PROCESS_PARAMS['SCORING'], cv=PROCESS_PARAMS['CROSS_FOLD_VALID'], 
             verbose=2, n_jobs=4
         )
-        HP_OPTIM_METHOD_INSTANCE.fit(x_train, y_train)
+        HP_OPTIM_METHOD_INSTANCE.fit(x_train_scaled, y_train)
 
         xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
         CHECK_DIR(OUT_DIR)
@@ -1212,8 +1214,6 @@ def KNN_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE
         return results
         
     elif PROCESS_PARAMS['METHOD']=='Optuna':
-        scaler = StandardScaler()
-        x_train_scaled = scaler.fit_transform(x_train)
         _PARAM_GRID = {k:v for k,v in HP_OPTIM_INPUTS.items() if k not in PARAM_GRID_KEYS_NOT_FOR_HP_OPTIM}
         print('PARAM_GRID: ', _PARAM_GRID)
 
@@ -1260,6 +1260,8 @@ def GB_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
     columnsToSelect = PROCESS_PARAMS['FEATURES']
     x_train = trainDF.loc[:, columnsToSelect]
     y_train = trainDF.iloc[:, -1]
+    scaler = StandardScaler()
+    x_train_scaled = scaler.fit_transform(x_train)
 
     # GRID_SEARCH
     if PROCESS_PARAMS['METHOD']=='GridSearchCV':
@@ -1276,7 +1278,7 @@ def GB_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
             scoring=PROCESS_PARAMS['SCORING'], cv=PROCESS_PARAMS['CROSS_FOLD_VALID'], 
             verbose=2, n_jobs=4
         )
-        HP_OPTIM_METHOD_INSTANCE.fit(x_train, y_train)
+        HP_OPTIM_METHOD_INSTANCE.fit(x_train_scaled, y_train)
 
         xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
         CHECK_DIR(OUT_DIR)
@@ -1307,7 +1309,7 @@ def GB_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
             scoring=PROCESS_PARAMS['SCORING'], cv=PROCESS_PARAMS['CROSS_FOLD_VALID'], 
             verbose=2, n_jobs=4
         )
-        HP_OPTIM_METHOD_INSTANCE.fit(x_train, y_train)
+        HP_OPTIM_METHOD_INSTANCE.fit(x_train_scaled, y_train)
 
         xls_out = pd.DataFrame(HP_OPTIM_METHOD_INSTANCE.cv_results_)
         CHECK_DIR(OUT_DIR)
@@ -1325,8 +1327,6 @@ def GB_HP_OPTIM_PROCESS (HP_OPTIM_INPUTS: dict, TRAIN_FILE_PATH: str, TEST_FILE_
         return results
         
     elif PROCESS_PARAMS['METHOD']=='Optuna':
-        scaler = StandardScaler()
-        x_train_scaled = scaler.fit_transform(x_train)
         _PARAM_GRID = {k:v for k,v in HP_OPTIM_INPUTS.items() if k not in PARAM_GRID_KEYS_NOT_FOR_HP_OPTIM}
         print('PARAM_GRID: ', _PARAM_GRID)
 
