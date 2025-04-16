@@ -39,7 +39,7 @@ D3_LAB_LOGO = {
     'PATH': os.path.join(IMG_DIR, 'banner.png'), 'SIZE': (75,75)
 }
 DEFAULT_BANNER_IMG = {
-    'PATH': os.path.join(IMG_DIR, 'default_panel.png'), 'SIZE': (650,450)
+    'PATH': os.path.join(IMG_DIR, 'default_panel.png'), 'SIZE': (637,470)
 }
 HP_OPTIM_IMG = {
     'PATH': os.path.join(IMG_DIR, 'hp_optim.png'), 'SIZE': (40,40)
